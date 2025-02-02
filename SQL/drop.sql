@@ -9,3 +9,7 @@
 --      02.02.2025: Initial version
 --
 -- *******************************************************************************************
+
+drop schema if exists staging cascade;
+
+drop table if exists public.sys_version;
