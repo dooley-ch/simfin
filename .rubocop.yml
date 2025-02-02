@@ -1,0 +1,61 @@
+# The behavior of RuboCop can be controlled via the .rubocop.yml
+# configuration file. It makes it possible to enable/disable
+# certain cops (checks) and to alter their behavior if they accept
+# any parameters. The file can be placed either in your home
+# directory or in some project directory.
+#
+# RuboCop will start looking for the configuration file in the directory
+# where the inspected file is and continue its way up to the root directory.
+#
+# See https://docs.rubocop.org/rubocop/configuration
+
+require:
+  - rubocop-minitest
+  - rubocop-rake
+  - rubocop-sequel
+
+AllCops:
+  NewCops: enable
+#  Exclude:
+#    - bin/*
+#    - scratch.rb
+#
+#Layout/LineLength:
+#  Description: People have wide screens, use them.
+#  Max: 200
+#
+#Rake/Desc:
+#  Description: Only tasks that should appear when param -T is used require a comment
+#  Enabled: false
+#
+#Metrics/AbcSize:
+#  Description: Default is too restrictive for rake work
+#  Enabled: false
+#
+#Metrics/CyclomaticComplexity:
+#  Description: Default is too restrictive for rake work
+#  Max: 15
+#
+#Metrics/MethodLength:
+#  Description: Default is too restrictive for rake work
+#  Max: 40
+#
+#Metrics/BlockLength:
+#  Description: Default is too restrictive for rake work
+#  Max: 200
+#
+#Metrics/ClassLength:
+#  Description: Default is too restrictive for rake work
+#  Max: 200
+#
+#Style/Documentation:
+#  Description: Disable for now
+#  Enabled: false
+#
+#Style/GuardClause:
+#  Description: Disable for now
+#  Enabled: false
+#
+#Minitest/MultipleAssertions:
+#  Description: Default is too restrictive for validating structures
+#  Max: 10
