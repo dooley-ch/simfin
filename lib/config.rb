@@ -12,7 +12,7 @@
 
 require 'pathname'
 require 'fileutils'
-require 'errors'
+require_relative 'errors'
 require 'yaml'
 
 module Config
