@@ -34,6 +34,555 @@ insert into public.sys_version(major, minor, build) values (1,0, 1);
 
 -- endregion Version Number
 
+-- region Application Tables
+
+-- region Master Tables
+
+create table accounting_period(
+                                  id smallserial not null,
+                                  "name" name not null,
+                                  active bool not null default true,
+                                  record_version smallint not null default 1,
+                                  created_on timestamp with time zone not null default current_timestamp,
+                                  updated_on timestamp with time zone not null default current_timestamp,
+                                  constraint accounting_period_pkey primary key(id)
+);
+
+CREATE UNIQUE INDEX accounting_period_idx ON accounting_period(name);
+
+create table company(
+                        id bigserial not null,
+                        company_number char(8) not null,
+                        ticker varchar(20) not null,
+                        company_name varchar(120) not null,
+                        isin char(12),
+                        cik char(20),
+                        end_of_year_month char(2),
+                        employees bigserial,
+                        business text,
+                        active bool not null default true,
+                        company_type_id smallint not null,
+                        industry_id smallint not null,
+                        currency_id smallint not null,
+                        stock_market_id smallint not null,
+                        country_id smallint not null,
+                        record_version smallint not null default 1,
+                        created_on timestamp with time zone not null default current_timestamp,
+                        updated_on timestamp with time zone not null default current_timestamp,
+                        constraint company_pkey primary key(id),
+                        constraint company_company_number_ukey UNIQUE(company_number),
+                        constraint company_ticker_ukey UNIQUE(ticker)
+);
+
+create table company_type(
+                             id smallserial not null,
+                             type_name name not null,
+                             active bool not null default true,
+                             record_version smallint not null default 1,
+                             created_on timestamp with time zone not null default current_timestamp,
+                             updated_on timestamp with time zone not null default current_timestamp,
+                             constraint company_type_pkey primary key(id)
+);
+
+CREATE UNIQUE INDEX company_type_name_idx ON company_type(type_name);
+
+create table country(
+                        id smallserial not null,
+                        country_name name not null,
+                        country_key char(3) not null,
+                        active bool not null default true,
+                        record_version smallint not null default 1,
+                        created_on timestamp with time zone not null default current_timestamp,
+                        updated_on timestamp with time zone not null default current_timestamp,
+                        constraint country_pkey primary key(id)
+);
+
+CREATE UNIQUE INDEX country_key_idx ON country(country_key);
+
+create table currency(
+                         id smallserial not null,
+                         currency_name name not null,
+                         currency_key char(3) not null,
+                         active bool not null default true,
+                         record_version smallint not null default 1,
+                         created_on timestamp with time zone not null default current_timestamp,
+                         updated_on timestamp with time zone not null default current_timestamp,
+                         constraint currency_pkey primary key(id)
+);
+
+CREATE UNIQUE INDEX currency_key_idx ON currency(currency_key);
+
+create table industry(
+                         id smallserial not null,
+                         industry_name name not null,
+                         active bool not null default true,
+                         sector_id smallint not null,
+                         record_version smallint not null default 1,
+                         created_on timestamp with time zone not null default current_timestamp,
+                         updated_on timestamp with time zone not null default current_timestamp,
+                         constraint industry_pkey primary key(id)
+);
+
+CREATE UNIQUE INDEX industry_sector_id_name_idx ON industry(sector_id, industry_name);
+
+create table sector(
+                       id smallserial not null,
+                       sector_name name not null,
+                       active bool not null default true,
+                       record_version smallint not null default 1,
+                       created_on timestamp with time zone not null default current_timestamp,
+                       updated_on timestamp with time zone not null default current_timestamp,
+                       constraint sector_pkey primary key(id)
+);
+
+CREATE UNIQUE INDEX sector_name_idx ON sector(sector_name);
+
+create table stock_market(
+                             id smallserial not null,
+                             market_name name not null,
+                             extra_data VARCHAR(2048),
+                             active bool not null default true,
+                             currency_id smallint not null,
+                             record_version smallint not null default 1,
+                             created_on timestamp with time zone not null default current_timestamp,
+                             updated_on timestamp with time zone not null default current_timestamp,
+                             constraint stock_market_pkey primary key(id)
+);
+
+CREATE UNIQUE INDEX stock_market_name_idx ON stock_market(market_name);
+
+-- endregion
+
+-- region Financial Tables
+
+-- region Income Statements
+
+create table income_statement_general(
+                                         id bigserial not null,
+                                         fiscal_year integer not null,
+                                         fiscal_period char(2) not null,
+                                         report_date date not null,
+                                         publish_date date not null,
+                                         restated_date date,
+                                         shares_basic bigint,
+                                         shares_diluted bigint,
+                                         revenue numeric(32,2),
+                                         cost_of_revenue numeric(32,2),
+                                         gross_profit numeric(32,2),
+                                         operating_expenses numeric(32,2),
+                                         selling_general_administrative numeric(32,2),
+                                         research_development numeric(32,2),
+                                         depreciation_amortization numeric(32,2),
+                                         operating_income numeric(32,2),
+                                         non_operating_income numeric(32,2),
+                                         interest_expense_net numeric(32,2),
+                                         pretax_income_loss_adj numeric(32,2),
+                                         abnormal_gains numeric(32,2),
+                                         pretax_income numeric(32,2),
+                                         income_tax_benefit_net numeric(32,2),
+                                         income_from_continuing_operations numeric(32,2),
+                                         net_extraordinary_gains numeric(32,2),
+                                         net_income numeric(32,2),
+                                         net_income_common numeric(32,2),
+                                         company_id bigint not null,
+                                         currency_id smallint not null,
+                                         accounting_period_id smallint not null,
+                                         created_on timestamp with time zone not null default current_timestamp,
+                                         constraint income_statement_general_pkey primary key(id)
+);
+
+create table income_statement_bank(
+                                      id bigserial not null,
+                                      fiscal_year integer not null,
+                                      fiscal_period char(2) not null,
+                                      report_date date not null,
+                                      publish_date date not null,
+                                      restated_date date,
+                                      shares_basic bigint,
+                                      shares_diluted bigint,
+                                      revenue numeric(32,2),
+                                      provision_for_loan_losses numeric(32,2),
+                                      net_revenue_after_provisions numeric(32,2),
+                                      total_non_interest_expense numeric(32,2),
+                                      operating_income numeric(32,2),
+                                      non_operating_income numeric(32,2),
+                                      pretax_income numeric(32,2),
+                                      income_tax_benefit_net numeric(32,2),
+                                      income_from_continuing_operations numeric(32,2),
+                                      net_extraordinary_gains numeric(32,2),
+                                      net_income numeric(32,2),
+                                      net_income_common numeric(32,2),
+                                      company_id bigint not null,
+                                      currency_id smallint not null,
+                                      accounting_period_id smallint not null,
+                                      created_on timestamp with time zone not null default current_timestamp,
+                                      constraint income_statement_bank_pkey primary key(id)
+);
+
+create table income_statement_insurance(
+                                           id bigserial not null,
+                                           fiscal_year integer not null,
+                                           fiscal_period char(2) not null,
+                                           report_date date not null,
+                                           publish_date date not null,
+                                           restated_date date,
+                                           shares_basic bigint,
+                                           shares_diluted bigint,
+                                           revenue numeric(32,2),
+                                           total_claims_losses numeric(32,2),
+                                           operating_income numeric(32,2),
+                                           pretax_income numeric(32,2),
+                                           income_tax_benefit_net numeric(32,2),
+                                           income_from_affiliates_net_of_taxes numeric(32,2),
+                                           income_from_continuing_operations numeric(32,2),
+                                           net_extraordinary_gains numeric(32,2),
+                                           net_income numeric(32,2),
+                                           net_income_common numeric(32,2),
+                                           company_id bigint not null,
+                                           currency_id smallint not null,
+                                           accounting_period_id smallint not null,
+                                           created_on timestamp with time zone not null default current_timestamp,
+                                           constraint income_statement_insurance_pkey primary key(id)
+);
+
+-- endregion
+
+-- region Cash Flow Statements
+
+create table cash_flow_general(
+                                  id bigserial not null,
+                                  fiscal_year integer not null,
+                                  fiscal_period char(2) not null,
+                                  report_date date not null,
+                                  publish_date date not null,
+                                  restated_date date,
+                                  shares_basic bigint,
+                                  shares_diluted bigint,
+                                  net_income numeric(32,2),
+                                  depreciation_amortization numeric(32,2),
+                                  non_cash_item numeric(32,2),
+                                  change_in_working_capital numeric(32,2),
+                                  change_in_accounts_receivable numeric(32,2),
+                                  change_in_inventories numeric(32,2),
+                                  change_in_accounts_payable numeric(32,2),
+                                  change_in_other numeric(32,2),
+                                  met_cash_from_operating_activities numeric(32,2),
+                                  change_in_fixed_assets_intangibles numeric(32,2),
+                                  net_change_in_long_term_investment numeric(32,2),
+                                  net_cash_from_acquisitions_divestitures numeric(32,2),
+                                  net_cash_from_investing_activities numeric(32,2),
+                                  dividends_paid numeric(32,2),
+                                  cash_from_repayment_of_debt numeric(32,2),
+                                  cash_from_repurchase_of_equity numeric(32,2),
+                                  net_cash_from_financing_activities numeric(32,2),
+                                  net_change_in_cash numeric(32,2),
+                                  company_id bigint not null,
+                                  currency_id smallint not null,
+                                  accounting_period_id smallint not null,
+                                  created_on timestamp with time zone not null default current_timestamp,
+                                  constraint cash_flow_general_pkey primary key(id)
+);
+
+create table cash_flow_bank(
+                               id bigserial not null,
+                               fiscal_year integer not null,
+                               fiscal_period char(2) not null,
+                               report_date date not null,
+                               publish_date date not null,
+                               restated_date date,
+                               shares_basic bigint,
+                               shares_diluted bigint,
+                               net_income numeric(32,2),
+                               depreciation_amortization numeric(32,2),
+                               provision_for_loan_losses numeric(32,2),
+                               non_cash_items numeric(32,2),
+                               change_in_working_capital numeric(32,2),
+                               net_cash_from_operating_activities numeric(32,2),
+                               change_in_fixed_assets_intangibles numeric(32,2),
+                               net_change_in_loans_interbank numeric(32,2),
+                               net_cash_from_acquisitions_divestiture numeric(32,2),
+                               net_cash_from_investing_activities numeric(32,2),
+                               dividends_paid numeric(32,2),
+                               cash_from_repayment_of_debt numeric(32,2),
+                               cash_from_repurchase_of_equity numeric(32,2),
+                               net_cash_from_financing_activities numeric(32,2),
+                               effect_of_foreign_exchange_rates numeric(32,2),
+                               net_change_in_cash numeric(32,2),
+                               company_id bigint not null,
+                               currency_id smallint not null,
+                               accounting_period_id smallint not null,
+                               created_on timestamp with time zone not null default current_timestamp,
+                               constraint cash_flow_bank_pkey primary key(id)
+);
+
+create table cash_flow_insurance(
+                                    id bigserial not null,
+                                    fiscal_year integer not null,
+                                    fiscal_period char(2) not null,
+                                    report_date date not null,
+                                    publish_date date not null,
+                                    restated_date date,
+                                    shares_basic bigint,
+                                    shares_diluted bigint,
+                                    net_income numeric(32,2),
+                                    depreciation_amortization numeric(32,2),
+                                    non_cash_items numeric(32,2),
+                                    net_cash_from_operating_activities numeric(32,2),
+                                    change_in_fixed_assets_intangibles numeric(32,2),
+                                    net_change_in_investments numeric(32,2),
+                                    net_cash_from_investing_activities numeric(32,2),
+                                    dividends_paid numeric(32,2),
+                                    cash_from_repayment_of_debt numeric(32,2),
+                                    cash_from_repurchase_of_equity numeric(32,2),
+                                    net_cash_from_financing_activities numeric(32,2),
+                                    effect_of_foreign_exchange_rates numeric(32,2),
+                                    net_change_in_cash numeric(32,2),
+                                    company_id bigint not null,
+                                    currency_id smallint not null,
+                                    accounting_period_id smallint not null,
+                                    created_on timestamp with time zone not null default current_timestamp,
+                                    constraint cash_flow_insurance_pkey primary key(id)
+);
+
+-- endregion
+
+-- region Balance Sheets
+
+create table balance_sheet_general(
+                                      id bigserial not null,
+                                      fiscal_year integer not null,
+                                      fiscal_period char(2) not null,
+                                      report_date date not null,
+                                      publish_date date not null,
+                                      restated_date date,
+                                      shares_basic bigint,
+                                      shares_diluted bigint,
+                                      cash_cash_equivalents_short_term_investments numeric(32,2),
+                                      accounts_notes_receivable numeric(32,2),
+                                      inventories numeric(32,2),
+                                      total_current_assets numeric(32,2),
+                                      property_plant_equipment_net numeric(32,2),
+                                      long_term_investments_receivables numeric(32,2),
+                                      other_long_term_assets numeric(32,2),
+                                      total_noncurrent_assets numeric(32,2),
+                                      total_assets numeric(32,2),
+                                      payables_accruals numeric(32,2),
+                                      short_term_debt numeric(32,2),
+                                      total_current_liabilities numeric(32,2),
+                                      long_term_debt numeric(32,2),
+                                      total_noncurrent_liabilities numeric(32,2),
+                                      total_liabilities numeric(32,2),
+                                      share_capital_additional_paid_in_capital numeric(32,2),
+                                      treasury_stock numeric(32,2),
+                                      retained_earnings numeric(32,2),
+                                      total_equity numeric(32,2),
+                                      total_liabilities_equity numeric(32,2),
+                                      company_id bigint not null,
+                                      currency_id smallint not null,
+                                      accounting_period_id smallint not null,
+                                      created_on timestamp with time zone not null default current_timestamp,
+                                      constraint balance_sheet_general_pkey primary key(id)
+);
+
+create table balance_sheet_bank(
+                                   id bigserial not null,
+                                   fiscal_year integer not null,
+                                   fiscal_period char(2) not null,
+                                   report_date date not null,
+                                   publish_date date not null,
+                                   restated_date date,
+                                   shares_basic bigint,
+                                   shares_diluted bigint,
+                                   cash_cash_equivalents_short_term_investments numeric(32,2),
+                                   interbank_assets numeric(32,2),
+                                   short_long_term_investments numeric(32,2),
+                                   accounts_notes_receivable numeric(32,2),
+                                   net_loans numeric(32,2),
+                                   net_fixed_assets numeric(32,2),
+                                   total_assets numeric(32,2),
+                                   total_deposits numeric(32,2),
+                                   short_term_debt numeric(32,2),
+                                   long_term_debt numeric(32,2),
+                                   total_liabilities numeric(32,2),
+                                   preferred_equity numeric(32,2),
+                                   share_capital_additional_paid_in_capital numeric(32,2),
+                                   treasury_stock numeric(32,2),
+                                   retained_earnings numeric(32,2),
+                                   total_equity numeric(32,2),
+                                   total_liabilities_equity numeric(32,2),
+                                   company_id bigint not null,
+                                   currency_id smallint not null,
+                                   accounting_period_id smallint not null,
+                                   created_on timestamp with time zone not null default current_timestamp,
+                                   constraint balance_sheet_bank_pkey primary key(id)
+);
+
+create table balance_sheet_insurance(
+                                        id bigserial not null,
+                                        fiscal_year integer not null,
+                                        fiscal_period char(2) not null,
+                                        report_date date not null,
+                                        publish_date date not null,
+                                        restated_date date,
+                                        shares_basic bigint,
+                                        shares_diluted bigint,
+                                        total_investments numeric(32,2),
+                                        cash_cash_equivalents_short_term_investments numeric(32,2),
+                                        accounts_notes_receivable numeric(32,2),
+                                        property_plant_equipment_net numeric(32,2),
+                                        total_assets numeric(32,2),
+                                        insurance_reserves numeric(32,2),
+                                        short_term_debt numeric(32,2),
+                                        long_term_debt numeric(32,2),
+                                        total_liabilities numeric(32,2),
+                                        preferred_equity numeric(32,2),
+                                        policyholders_equity numeric(32,2),
+                                        share_capital_additional_paid_in_capital numeric(32,2),
+                                        treasury_stock numeric(32,2),
+                                        retained_Earnings numeric(32,2),
+                                        total_Equity numeric(32,2),
+                                        total_liabilities_equity numeric(32,2),
+                                        company_id bigint not null,
+                                        currency_id smallint not null,
+                                        accounting_period_id smallint not null,
+                                        created_on timestamp with time zone not null default current_timestamp,
+                                        constraint balance_sheet_insurance_pkey primary key(id)
+);
+
+-- endregion
+
+-- region Share Prices
+
+create table stock_price(
+                            id bigserial not null,
+                            price_date date not null,
+                            open numeric(6,2),
+                            high numeric(6,2),
+                            low numeric(6,2),
+                            actual_close numeric(6,2),
+                            adj_close numeric(6,2),
+                            volume bigserial,
+                            dividend numeric(6,2),
+                            shares_outstanding bigserial,
+                            company_id bigint not null,
+                            created_on timestamp with time zone not null default current_timestamp,
+                            constraint stock_price_pkey primary key(id)
+);
+
+-- endregion
+
+-- endregion
+
+-- region Relationships
+
+alter table industry
+    add constraint industry_sector_id_fkey
+        foreign key (sector_id) references sector (id);
+
+alter table stock_market
+    add constraint stock_market_currency_id_fkey
+        foreign key (currency_id) references currency (id);
+
+alter table company
+    add constraint company_country_id_fkey
+        foreign key (country_id) references country (id);
+
+alter table company
+    add constraint company_company_type_id_fkey
+        foreign key (company_type_id) references company_type (id);
+
+alter table company
+    add constraint company_industry_id_fkey
+        foreign key (industry_id) references industry (id);
+
+alter table company
+    add constraint company_currency_id_fkey
+        foreign key (currency_id) references currency (id);
+
+alter table company
+    add constraint company_stock_market_id_fkey
+        foreign key (stock_market_id) references stock_market (id);
+
+alter table stock_price
+    add constraint stock_price_company_id_fkey
+        foreign key (company_id) references company (id);
+
+alter table balance_sheet_bank
+    add constraint balance_sheet_bank_company_id_fkey
+        foreign key (company_id) references company (id);
+
+alter table balance_sheet_insurance
+    add constraint balance_sheet_insurance_company_id_fkey
+        foreign key (company_id) references company (id);
+
+alter table balance_sheet_general
+    add constraint balance_sheet_general_currency_id_fkey
+        foreign key (currency_id) references currency (id);
+
+alter table balance_sheet_bank
+    add constraint balance_sheet_bank_currency_id_fkey
+        foreign key (currency_id) references currency (id);
+
+alter table balance_sheet_insurance
+    add constraint balance_sheet_insurance_currency_id_fkey
+        foreign key (currency_id) references currency (id);
+
+alter table balance_sheet_general
+    add constraint balance_sheet_general_company_id_fkey
+        foreign key (company_id) references company (id);
+
+alter table income_statement_bank
+    add constraint income_statement_bank_currency_id_fkey
+        foreign key (currency_id) references currency (id);
+
+alter table income_statement_insurance
+    add constraint income_statement_insurance_currency_id_fkey
+        foreign key (currency_id) references currency (id);
+
+alter table income_statement_general
+    add constraint income_statement_general_company_id_fkey
+        foreign key (company_id) references company (id);
+
+alter table balance_sheet_insurance
+    add constraint balance_sheet_insurance_accounting_period_id_fkey
+        foreign key (accounting_period_id) references accounting_period (id);
+
+alter table balance_sheet_bank
+    add constraint balance_sheet_bank_accounting_period_id_fkey
+        foreign key (accounting_period_id) references accounting_period (id);
+
+alter table balance_sheet_general
+    add constraint balance_sheet_general_accounting_period_id_fkey
+        foreign key (accounting_period_id) references accounting_period (id);
+
+alter table cash_flow_insurance
+    add constraint cash_flow_insurance_accounting_period_id_fkey
+        foreign key (accounting_period_id) references accounting_period (id);
+
+alter table cash_flow_bank
+    add constraint cash_flow_bank_accounting_period_id_fkey
+        foreign key (accounting_period_id) references accounting_period (id);
+
+alter table cash_flow_general
+    add constraint cash_flow_general_accounting_period_id_fkey
+        foreign key (accounting_period_id) references accounting_period (id);
+
+alter table income_statement_insurance
+    add constraint income_statement_insurance_accounting_period_id_fkey
+        foreign key (accounting_period_id) references accounting_period (id);
+
+alter table income_statement_bank
+    add constraint income_statement_bank_accounting_period_id_fkey
+        foreign key (accounting_period_id) references accounting_period (id);
+
+alter table income_statement_general
+    add constraint income_statement_general_accounting_period_id_fkey
+        foreign key (accounting_period_id) references accounting_period (id);
+
+-- endregion
+
+-- endregion Application Tables
+
 -- region Staging Schema - Tables
 
 create table staging.markets
@@ -48,11 +597,11 @@ create table staging.markets
 
 create table staging.industries
 (
-    id smallserial NOT NULL,
+    id smallserial not null,
     industry_id char(6),
     industry name,
     sector name,
-    created_on timestamp with time zone NOT NULL default current_timestamp,
+    created_on timestamp with time zone not null default current_timestamp,
     constraint imp_sector_industry_pkey primary key(id)
 );
 
@@ -2553,7 +3102,7 @@ create table staging.balance_sheet_us_general_annual
     retained_earnings varchar(100),
     total_equity varchar(100),
     total_liabilities_equity varchar(100),
-    created_on timestamp with time zone NOT NULL default current_timestamp,
+    created_on timestamp with time zone not null default current_timestamp,
     constraint balance_sheet_us_general_annual_pkey primary key(id)
 );
 
@@ -2590,7 +3139,7 @@ create table staging.balance_sheet_us_general_quarterly
     retained_earnings varchar(100),
     total_equity varchar(100),
     total_liabilities_equity varchar(100),
-    created_on timestamp with time zone NOT NULL default current_timestamp,
+    created_on timestamp with time zone not null default current_timestamp,
     constraint balance_sheet_us_general_quarterly_pkey primary key(id)
 );
 
@@ -2627,7 +3176,7 @@ create table staging.balance_sheet_us_general_ttm
     retained_earnings varchar(100),
     total_equity varchar(100),
     total_liabilities_equity varchar(100),
-    created_on timestamp with time zone NOT NULL default current_timestamp,
+    created_on timestamp with time zone not null default current_timestamp,
     constraint balance_sheet_us_general_ttm_pkey primary key(id)
 );
 
@@ -2661,7 +3210,7 @@ create table staging.balance_sheet_us_bank_annual
     retained_earnings varchar(100),
     total_equity varchar(100),
     total_liabilities_equity varchar(100),
-    created_on timestamp with time zone NOT NULL default current_timestamp,
+    created_on timestamp with time zone not null default current_timestamp,
     constraint balance_sheet_us_bank_annual_pkey primary key(id)
 );
 
@@ -2695,7 +3244,7 @@ create table staging.balance_sheet_us_bank_quarterly
     retained_earnings varchar(100),
     total_equity varchar(100),
     total_liabilities_equity varchar(100),
-    created_on timestamp with time zone NOT NULL default current_timestamp,
+    created_on timestamp with time zone not null default current_timestamp,
     constraint balance_sheet_us_bank_quarterly_pkey primary key(id)
 );
 
@@ -2729,7 +3278,7 @@ create table staging.balance_sheet_us_bank_ttm
     retained_earnings varchar(100),
     total_equity varchar(100),
     total_liabilities_equity varchar(100),
-    created_on timestamp with time zone NOT NULL default current_timestamp,
+    created_on timestamp with time zone not null default current_timestamp,
     constraint balance_sheet_us_bank_ttm_pkey primary key(id)
 );
 
@@ -2762,7 +3311,7 @@ create table staging.balance_sheet_us_insurance_annual
     retained_earnings varchar(100),
     total_equity varchar(100),
     total_liabilities_equity varchar(100),
-    created_on timestamp with time zone NOT NULL default current_timestamp,
+    created_on timestamp with time zone not null default current_timestamp,
     constraint balance_sheet_us_insurance_annual_pkey primary key(id)
 );
 
@@ -2795,7 +3344,7 @@ create table staging.balance_sheet_us_insurance_quarterly
     retained_earnings varchar(100),
     total_equity varchar(100),
     total_liabilities_equity varchar(100),
-    created_on timestamp with time zone NOT NULL default current_timestamp,
+    created_on timestamp with time zone not null default current_timestamp,
     constraint balance_sheet_us_insurance_quarterly_pkey primary key(id)
 );
 
@@ -2828,7 +3377,7 @@ create table staging.balance_sheet_us_insurance_ttm
     retained_earnings varchar(100),
     total_equity varchar(100),
     total_liabilities_equity varchar(100),
-    created_on timestamp with time zone NOT NULL default current_timestamp,
+    created_on timestamp with time zone not null default current_timestamp,
     constraint balance_sheet_us_insurance_ttm_pkey primary key(id)
 );
     
@@ -2869,7 +3418,7 @@ create table staging.balance_sheet_de_general_annual
     retained_earnings varchar(100),
     total_equity varchar(100),
     total_liabilities_equity varchar(100),
-    created_on timestamp with time zone NOT NULL default current_timestamp,
+    created_on timestamp with time zone not null default current_timestamp,
     constraint balance_sheet_de_general_annual_pkey primary key(id)
 );
 
@@ -2906,7 +3455,7 @@ create table staging.balance_sheet_de_general_quarterly
     retained_earnings varchar(100),
     total_equity varchar(100),
     total_liabilities_equity varchar(100),
-    created_on timestamp with time zone NOT NULL default current_timestamp,
+    created_on timestamp with time zone not null default current_timestamp,
     constraint balance_sheet_de_general_quarterly_pkey primary key(id)
 );
 
@@ -2943,7 +3492,7 @@ create table staging.balance_sheet_de_general_ttm
     retained_earnings varchar(100),
     total_equity varchar(100),
     total_liabilities_equity varchar(100),
-    created_on timestamp with time zone NOT NULL default current_timestamp,
+    created_on timestamp with time zone not null default current_timestamp,
     constraint balance_sheet_de_general_ttm_pkey primary key(id)
 );
 
@@ -2977,7 +3526,7 @@ create table staging.balance_sheet_de_bank_annual
     retained_earnings varchar(100),
     total_equity varchar(100),
     total_liabilities_equity varchar(100),
-    created_on timestamp with time zone NOT NULL default current_timestamp,
+    created_on timestamp with time zone not null default current_timestamp,
     constraint balance_sheet_de_bank_annual_pkey primary key(id)
 );
 
@@ -3011,7 +3560,7 @@ create table staging.balance_sheet_de_bank_quarterly
     retained_earnings varchar(100),
     total_equity varchar(100),
     total_liabilities_equity varchar(100),
-    created_on timestamp with time zone NOT NULL default current_timestamp,
+    created_on timestamp with time zone not null default current_timestamp,
     constraint balance_sheet_de_bank_quarterly_pkey primary key(id)
 );
 
@@ -3045,7 +3594,7 @@ create table staging.balance_sheet_de_bank_ttm
     retained_earnings varchar(100),
     total_equity varchar(100),
     total_liabilities_equity varchar(100),
-    created_on timestamp with time zone NOT NULL default current_timestamp,
+    created_on timestamp with time zone not null default current_timestamp,
     constraint balance_sheet_de_bank_ttm_pkey primary key(id)
 );
 
@@ -3078,7 +3627,7 @@ create table staging.balance_sheet_de_insurance_annual
     retained_earnings varchar(100),
     total_equity varchar(100),
     total_liabilities_equity varchar(100),
-    created_on timestamp with time zone NOT NULL default current_timestamp,
+    created_on timestamp with time zone not null default current_timestamp,
     constraint balance_sheet_de_insurance_annual_pkey primary key(id)
 );
 
@@ -3111,7 +3660,7 @@ create table staging.balance_sheet_de_insurance_quarterly
     retained_earnings varchar(100),
     total_equity varchar(100),
     total_liabilities_equity varchar(100),
-    created_on timestamp with time zone NOT NULL default current_timestamp,
+    created_on timestamp with time zone not null default current_timestamp,
     constraint balance_sheet_de_insurance_quarterly_pkey primary key(id)
 );
 
@@ -3144,7 +3693,7 @@ create table staging.balance_sheet_de_insurance_ttm
     retained_earnings varchar(100),
     total_equity varchar(100),
     total_liabilities_equity varchar(100),
-    created_on timestamp with time zone NOT NULL default current_timestamp,
+    created_on timestamp with time zone not null default current_timestamp,
     constraint balance_sheet_de_insurance_ttm_pkey primary key(id)
 );
 
@@ -3185,8 +3734,8 @@ create table staging.balance_sheet_cd_general_annual
     retained_earnings varchar(100),
     total_equity varchar(100),
     total_liabilities_equity varchar(100),
-    created_on timestamp with time zone NOT NULL default current_timestamp,
-    constraint balance_sheet_cd_general_annual_pkey PRIMARY KEY(id)
+    created_on timestamp with time zone not null default current_timestamp,
+    constraint balance_sheet_cd_general_annual_pkey primary key(id)
 );
 
 create table staging.balance_sheet_cd_general_quarterly
@@ -3222,8 +3771,8 @@ create table staging.balance_sheet_cd_general_quarterly
     retained_earnings varchar(100),
     total_equity varchar(100),
     total_liabilities_equity varchar(100),
-    created_on timestamp with time zone NOT NULL default current_timestamp,
-    constraint balance_sheet_cd_general_quarterly_pkey PRIMARY KEY(id)
+    created_on timestamp with time zone not null default current_timestamp,
+    constraint balance_sheet_cd_general_quarterly_pkey primary key(id)
 );
 
 create table staging.balance_sheet_cd_general_ttm
@@ -3259,8 +3808,8 @@ create table staging.balance_sheet_cd_general_ttm
     retained_earnings varchar(100),
     total_equity varchar(100),
     total_liabilities_equity varchar(100),
-    created_on timestamp with time zone NOT NULL default current_timestamp,
-    constraint balance_sheet_cd_general_ttm_pkey PRIMARY KEY(id)
+    created_on timestamp with time zone not null default current_timestamp,
+    constraint balance_sheet_cd_general_ttm_pkey primary key(id)
 );
 
 create table staging.balance_sheet_cd_bank_annual
@@ -3293,8 +3842,8 @@ create table staging.balance_sheet_cd_bank_annual
     retained_earnings varchar(100),
     total_equity varchar(100),
     total_liabilities_equity varchar(100),
-    created_on timestamp with time zone NOT NULL default current_timestamp,
-    constraint balance_sheet_cd_bank_annual_pkey PRIMARY KEY(id)
+    created_on timestamp with time zone not null default current_timestamp,
+    constraint balance_sheet_cd_bank_annual_pkey primary key(id)
 );
 
 create table staging.balance_sheet_cd_bank_quarterly
@@ -3327,8 +3876,8 @@ create table staging.balance_sheet_cd_bank_quarterly
     retained_earnings varchar(100),
     total_equity varchar(100),
     total_liabilities_equity varchar(100),
-    created_on timestamp with time zone NOT NULL default current_timestamp,
-    constraint balance_sheet_cd_bank_quarterly_pkey PRIMARY KEY(id)
+    created_on timestamp with time zone not null default current_timestamp,
+    constraint balance_sheet_cd_bank_quarterly_pkey primary key(id)
 );
 
 create table staging.balance_sheet_cd_bank_ttm
@@ -3361,8 +3910,8 @@ create table staging.balance_sheet_cd_bank_ttm
     retained_earnings varchar(100),
     total_equity varchar(100),
     total_liabilities_equity varchar(100),
-    created_on timestamp with time zone NOT NULL default current_timestamp,
-    constraint balance_sheet_cd_bank_ttm_pkey PRIMARY KEY(id)
+    created_on timestamp with time zone not null default current_timestamp,
+    constraint balance_sheet_cd_bank_ttm_pkey primary key(id)
 );
 
 create table staging.balance_sheet_cd_insurance_annual
@@ -3394,8 +3943,8 @@ create table staging.balance_sheet_cd_insurance_annual
     retained_earnings varchar(100),
     total_equity varchar(100),
     total_liabilities_equity varchar(100),
-    created_on timestamp with time zone NOT NULL default current_timestamp,
-    constraint balance_sheet_cd_insurance_annual_pkey PRIMARY KEY(id)
+    created_on timestamp with time zone not null default current_timestamp,
+    constraint balance_sheet_cd_insurance_annual_pkey primary key(id)
 );
 
 create table staging.balance_sheet_cd_insurance_quarterly
@@ -3427,8 +3976,8 @@ create table staging.balance_sheet_cd_insurance_quarterly
     retained_earnings varchar(100),
     total_equity varchar(100),
     total_liabilities_equity varchar(100),
-    created_on timestamp with time zone NOT NULL default current_timestamp,
-    constraint balance_sheet_cd_insurance_quarterly_pkey PRIMARY KEY(id)
+    created_on timestamp with time zone not null default current_timestamp,
+    constraint balance_sheet_cd_insurance_quarterly_pkey primary key(id)
 );
 
 create table staging.balance_sheet_cd_insurance_ttm
@@ -3460,8 +4009,8 @@ create table staging.balance_sheet_cd_insurance_ttm
     retained_earnings varchar(100),
     total_equity varchar(100),
     total_liabilities_equity varchar(100),
-    created_on timestamp with time zone NOT NULL default current_timestamp,
-    constraint balance_sheet_cd_insurance_ttm_pkey PRIMARY KEY(id)
+    created_on timestamp with time zone not null default current_timestamp,
+    constraint balance_sheet_cd_insurance_ttm_pkey primary key(id)
 );
 
 -- endregion Canada
@@ -3501,8 +4050,8 @@ create table staging.balance_sheet_cn_general_annual
     retained_earnings varchar(100),
     total_equity varchar(100),
     total_liabilities_equity varchar(100),
-    created_on timestamp with time zone NOT NULL default current_timestamp,
-    constraint balance_sheet_cn_general_annual_pkey PRIMARY KEY(id)
+    created_on timestamp with time zone not null default current_timestamp,
+    constraint balance_sheet_cn_general_annual_pkey primary key(id)
 );
 
 create table staging.balance_sheet_cn_general_quarterly
@@ -3538,8 +4087,8 @@ create table staging.balance_sheet_cn_general_quarterly
     retained_earnings varchar(100),
     total_equity varchar(100),
     total_liabilities_equity varchar(100),
-    created_on timestamp with time zone NOT NULL default current_timestamp,
-    constraint balance_sheet_cn_general_quarterly_pkey PRIMARY KEY(id)
+    created_on timestamp with time zone not null default current_timestamp,
+    constraint balance_sheet_cn_general_quarterly_pkey primary key(id)
 );
 
 create table staging.balance_sheet_cn_general_ttm
@@ -3575,8 +4124,8 @@ create table staging.balance_sheet_cn_general_ttm
     retained_earnings varchar(100),
     total_equity varchar(100),
     total_liabilities_equity varchar(100),
-    created_on timestamp with time zone NOT NULL default current_timestamp,
-    constraint balance_sheet_cn_general_ttm_pkey PRIMARY KEY(id)
+    created_on timestamp with time zone not null default current_timestamp,
+    constraint balance_sheet_cn_general_ttm_pkey primary key(id)
 );
 
 create table staging.balance_sheet_cn_bank_annual
@@ -3609,8 +4158,8 @@ create table staging.balance_sheet_cn_bank_annual
     retained_earnings varchar(100),
     total_equity varchar(100),
     total_liabilities_equity varchar(100),
-    created_on timestamp with time zone NOT NULL default current_timestamp,
-    constraint balance_sheet_cn_bank_annual_pkey PRIMARY KEY(id)
+    created_on timestamp with time zone not null default current_timestamp,
+    constraint balance_sheet_cn_bank_annual_pkey primary key(id)
 );
 
 create table staging.balance_sheet_cn_bank_quarterly
@@ -3643,8 +4192,8 @@ create table staging.balance_sheet_cn_bank_quarterly
     retained_earnings varchar(100),
     total_equity varchar(100),
     total_liabilities_equity varchar(100),
-    created_on timestamp with time zone NOT NULL default current_timestamp,
-    constraint balance_sheet_cn_bank_quarterly_pkey PRIMARY KEY(id)
+    created_on timestamp with time zone not null default current_timestamp,
+    constraint balance_sheet_cn_bank_quarterly_pkey primary key(id)
 );
 
 create table staging.balance_sheet_cn_bank_ttm
@@ -3677,8 +4226,8 @@ create table staging.balance_sheet_cn_bank_ttm
     retained_earnings varchar(100),
     total_equity varchar(100),
     total_liabilities_equity varchar(100),
-    created_on timestamp with time zone NOT NULL default current_timestamp,
-    constraint balance_sheet_cn_bank_ttm_pkey PRIMARY KEY(id)
+    created_on timestamp with time zone not null default current_timestamp,
+    constraint balance_sheet_cn_bank_ttm_pkey primary key(id)
 );
 
 create table staging.balance_sheet_cn_insurance_annual
@@ -3710,8 +4259,8 @@ create table staging.balance_sheet_cn_insurance_annual
     retained_earnings varchar(100),
     total_equity varchar(100),
     total_liabilities_equity varchar(100),
-    created_on timestamp with time zone NOT NULL default current_timestamp,
-    constraint balance_sheet_cn_insurance_annual_pkey PRIMARY KEY(id)
+    created_on timestamp with time zone not null default current_timestamp,
+    constraint balance_sheet_cn_insurance_annual_pkey primary key(id)
 );
 
 create table staging.balance_sheet_cn_insurance_quarterly
@@ -3743,8 +4292,8 @@ create table staging.balance_sheet_cn_insurance_quarterly
     retained_earnings varchar(100),
     total_equity varchar(100),
     total_liabilities_equity varchar(100),
-    created_on timestamp with time zone NOT NULL default current_timestamp,
-    constraint balance_sheet_cn_insurance_quarterly_pkey PRIMARY KEY(id)
+    created_on timestamp with time zone not null default current_timestamp,
+    constraint balance_sheet_cn_insurance_quarterly_pkey primary key(id)
 );
 
 create table staging.balance_sheet_cn_insurance_ttm
@@ -3776,8 +4325,8 @@ create table staging.balance_sheet_cn_insurance_ttm
     retained_earnings varchar(100),
     total_equity varchar(100),
     total_liabilities_equity varchar(100),
-    created_on timestamp with time zone NOT NULL default current_timestamp,
-    constraint balance_sheet_cn_insurance_ttm_pkey PRIMARY KEY(id)
+    created_on timestamp with time zone not null default current_timestamp,
+    constraint balance_sheet_cn_insurance_ttm_pkey primary key(id)
 );
 
 -- endregion
