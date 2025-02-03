@@ -1,0 +1,27 @@
+# ╔═════════════════════════════════════════════════════════════════════════════════════════════════
+# ║     config.yml
+# ╠═════════════════════════════════════════════════════════════════════════════════════════════════
+# ║     Created: 02.02.2025
+# ║
+# ║     Copyright (c) 2025 James Dooley <james@dooley.ch>
+# ║
+# ║     History:
+# ║     02.02.2025: Initial version
+# ╚═════════════════════════════════════════════════════════════════════════════════════════════════
+
+simfin:
+  regions:
+    - us
+    - cn
+    - de
+  time-frames:
+    - annual
+    - quarterly
+    - ttm
+  files:
+    income
+    cash-flow
+    balance-sheet
+    company
+    share-prices
+    other

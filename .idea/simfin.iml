@@ -18,6 +18,7 @@
     <orderEntry type="library" scope="PROVIDED" name="language_server-protocol (v3.17.0.4, ruby-3.4.1-p0) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="lint_roller (v1.1.0, ruby-3.4.1-p0) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="little-plugger (v1.1.4, ruby-3.4.1-p0) [gem]" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="logger (v1.6.5, ruby-3.4.1-p0) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="logging (v2.4.0, ruby-3.4.1-p0) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="minitest (v5.25.4, ruby-3.4.1-p0) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="multi_json (v1.15.0, ruby-3.4.1-p0) [gem]" level="application" />
@@ -52,5 +53,15 @@
     <orderEntry type="library" scope="PROVIDED" name="tty-spinner (v0.9.3, ruby-3.4.1-p0) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="unicode-display_width (v2.6.0, ruby-3.4.1-p0) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="unicode_utils (v1.4.0, ruby-3.4.1-p0) [gem]" level="application" />
+  </component>
+  <component name="RakeTasksCache-v2">
+    <option name="myRootTask">
+      <RakeTaskImpl id="rake">
+        <subtasks>
+          <RakeTaskImpl description="Confirms the environment is ready for operation" fullCommand="verify" id="verify" />
+          <RakeTaskImpl description="" fullCommand="default" id="default" />
+        </subtasks>
+      </RakeTaskImpl>
+    </option>
   </component>
 </module>
