@@ -36,26 +36,30 @@ AllCops:
 #  Description: Default is too restrictive for rake work
 #  Max: 15
 #
-#Metrics/MethodLength:
-#  Description: Default is too restrictive for rake work
-#  Max: 40
-#
+Metrics/MethodLength:
+  Description: Default is too restrictive for rake work
+  Max: 25
+
 #Metrics/BlockLength:
 #  Description: Default is too restrictive for rake work
-#  Max: 200
-#
+#  Max: 50
+
 #Metrics/ClassLength:
 #  Description: Default is too restrictive for rake work
 #  Max: 200
 #
-#Style/Documentation:
-#  Description: Disable for now
-#  Enabled: false
-#
+Style/Documentation:
+  Description: Disable for now
+  Enabled: false
+
+Style/GuardClause:
+  Description: Some of it's suggestions are just plain dumb!
+  Enabled: false
+
 #Style/GuardClause:
 #  Description: Disable for now
 #  Enabled: false
 #
-#Minitest/MultipleAssertions:
-#  Description: Default is too restrictive for validating structures
-#  Max: 10
+Minitest/MultipleAssertions:
+  Description: Default is too restrictive for validating structures
+  Max: 10

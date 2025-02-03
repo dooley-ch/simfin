@@ -1,36 +1,24 @@
 # ╔═════════════════════════════════════════════════════════════════════════════════════════════════
-# ║     config.yml
+# ║     config_logging_test.rb
 # ╠═════════════════════════════════════════════════════════════════════════════════════════════════
-# ║     Created: 02.02.2025
+# ║     Created: 03.02.2025
 # ║
 # ║     Copyright (c) 2025 James Dooley <james@dooley.ch>
 # ║
 # ║     History:
-# ║     02.02.2025: Initial version
+# ║     03.02.2025: Initial version
 # ╚═════════════════════════════════════════════════════════════════════════════════════════════════
+# frozen_string_literal: true
 
-simfin:
-  regions:
-    - us
-    - cn
-    - de
-  time-frames:
-    - annual
-    - quarterly
-    - ttm
-  companies:
-    - standard
-    - bank
-    - insurance
-  others:
-    - markets
-    - industries
+require 'test_helper'
+require_relative '../lib/config'
 
-logging:
-  file_name: simfin.log
-  level: debug # Valid values: unknown, fatal, error, warn, info, debug
+class ConfigLoggingTest < Minitest::Test
+  def test_should_return_logging_info
+    info = Config::Logging.call
 
-database:
-  database: sat_company_data_dev
-  user: sat_dev_user
-  password: dev*123
+    refute_nil info, 'Information not loaded'
+    assert_equal 'debug', info.level, 'Incorrect logging level returned'
+    assert_equal 'simfin.log', info.file, 'Incorrect file name returned'
+  end
+end

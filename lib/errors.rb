@@ -1,36 +1,28 @@
 # ╔═════════════════════════════════════════════════════════════════════════════════════════════════
-# ║     config.yml
+# ║     errors.rb
 # ╠═════════════════════════════════════════════════════════════════════════════════════════════════
-# ║     Created: 02.02.2025
+# ║     Created: 03.02.2025
 # ║
 # ║     Copyright (c) 2025 James Dooley <james@dooley.ch>
 # ║
 # ║     History:
-# ║     02.02.2025: Initial version
+# ║     03.02.2025: Initial version
 # ╚═════════════════════════════════════════════════════════════════════════════════════════════════
+# frozen_string_literal: true
 
-simfin:
-  regions:
-    - us
-    - cn
-    - de
-  time-frames:
-    - annual
-    - quarterly
-    - ttm
-  companies:
-    - standard
-    - bank
-    - insurance
-  others:
-    - markets
-    - industries
+module Errors
+  class FileNotFoundError < StandardError
+    attr_reader :file_name
 
-logging:
-  file_name: simfin.log
-  level: debug # Valid values: unknown, fatal, error, warn, info, debug
+    def initialize(file_name)
+      super("File not found: #{file_name}")
+      @file_name = file_name
+    end
+  end
 
-database:
-  database: sat_company_data_dev
-  user: sat_dev_user
-  password: dev*123
+  class ConfigurationError < StandardError
+    def initialize(message)
+      super("Configuration error: #{message}")
+    end
+  end
+end

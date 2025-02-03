@@ -12,8 +12,60 @@
 
 require 'pathname'
 require 'fileutils'
+require 'errors'
+require 'yaml'
 
 module Config
+  LoggingInfo = Struct.new(:level, :file)
+  DatabaseInfo = Struct.new(:database, :user, :password)
+
+  module Database
+    class << self
+      def call(logger = nil)
+        values = ConfigFile.load_hash('database', logger)
+        DatabaseInfo.new(values['database'], values['user'], values['password'])
+      end
+    end
+  end
+
+  module Logging
+    class << self
+      def call(logger = nil)
+        values = ConfigFile.load_hash('logging', logger)
+        LoggingInfo.new(values['level'], values['file_name'])
+      end
+    end
+  end
+
+  module ConfigFile
+    class << self
+      def load_hash(hash_name, logger = nil)
+        config_file = Files.config_file.to_s
+        unless File.exist?(config_file)
+          logger&.error "Config file #{config_file} not found"
+          raise Errors::FileNotFoundError, config_file
+        end
+
+        begin
+          contents = YAML.load_file config_file
+        rescue Psych::SyntaxError => e
+          error_message = "YAML syntax error in config file': #{e.message}"
+          logger&.error error_message
+          raise Errors::ConfigurationError, error_message
+        end
+
+        if contents.key?(hash_name)
+          logger&.debug "Config hash: #{hash_name} loaded successfully"
+          return contents[hash_name]
+        end
+
+        error_message = "Config hash: #{hash_name} not found in config file"
+        logger&.error error_message
+        raise Errors::ConfigurationError, error_message
+      end
+    end
+  end
+
   module Folders
     class << self
       def logs
