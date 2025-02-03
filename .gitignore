@@ -113,3 +113,5 @@ build-iPhoneSimulator/
 /sample-files/us-shareprices-daily.zip
 /data/logs/simfin.log
 /data/logs/simfin.log.age
+sample-files/.DS_Store
+.DS_Store

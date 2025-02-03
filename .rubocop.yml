@@ -40,6 +40,18 @@ Metrics/MethodLength:
   Description: Default is too restrictive for rake work
   Max: 25
 
+Metrics/AbcSize:
+  Description: Disable for now
+  Enabled: false
+
+Metrics/PerceivedComplexity:
+  Description: Disable for now
+  Enabled: false
+
+Metrics/CyclomaticComplexity:
+  Description: Disable for now
+  Enabled: false
+
 #Metrics/BlockLength:
 #  Description: Default is too restrictive for rake work
 #  Max: 50
@@ -54,6 +66,14 @@ Style/Documentation:
 
 Style/GuardClause:
   Description: Some of it's suggestions are just plain dumb!
+  Enabled: false
+
+Style/ClassVars:
+  Description: Disable for now
+  Enabled: false
+
+Style/CombinableLoops:
+  Description: Disable for now
   Enabled: false
 
 #Style/GuardClause:
