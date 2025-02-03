@@ -18,11 +18,23 @@ require 'yaml'
 module Config
   LoggingInfo = Struct.new(:level, :file)
   DatabaseInfo = Struct.new(:database, :user, :password)
+  SimFinInfo = Struct.new(:regions, :time_frames, :companies, :others)
+
+  module SimFin
+    class << self
+      def call(logger = nil)
+        values = ConfigFile.load_hash('simfin', logger)
+        logger&.debug 'Database information loaded...'
+        SimFinInfo.new(values['regions'], values['time-frames'], values['companies'], values['others'])
+      end
+    end
+  end
 
   module Database
     class << self
       def call(logger = nil)
         values = ConfigFile.load_hash('database', logger)
+        logger&.debug 'Database information loaded...'
         DatabaseInfo.new(values['database'], values['user'], values['password'])
       end
     end
@@ -32,6 +44,7 @@ module Config
     class << self
       def call(logger = nil)
         values = ConfigFile.load_hash('logging', logger)
+        logger&.debug 'Logging information loaded...'
         LoggingInfo.new(values['level'], values['file_name'])
       end
     end
@@ -105,7 +118,8 @@ module Config
   module Files
     class << self
       def log_file
-        Pathname.new(Folders.logs).expand_path.join('simfin.log')
+        values = Logging.call
+        Pathname.new(Folders.logs).expand_path.join(values.file)
       end
 
       def config_file
