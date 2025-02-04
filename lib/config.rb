@@ -82,35 +82,43 @@ module Config
   module Folders
     class << self
       def logs
-        folder = Pathname.new(base_folder).join('logs').expand_path
+        folder = Pathname.new(base_data_folder).join('logs').expand_path
         FileUtils.mkdir_p(folder.to_s)
         folder.to_s
       end
 
       def downloads
-        folder = Pathname.new(base_folder).join('downloads').expand_path
+        folder = Pathname.new(base_data_folder).join('downloads').expand_path
         FileUtils.mkdir_p(folder.to_s)
         folder.to_s
       end
 
       def temp
-        folder = Pathname.new(base_folder).join('temp').expand_path
+        folder = Pathname.new(base_data_folder).join('temp').expand_path
         FileUtils.mkdir_p(folder.to_s)
         folder.to_s
       end
 
       def archive
-        folder = Pathname.new(base_folder).join('archive').expand_path
+        folder = Pathname.new(base_data_folder).join('archive').expand_path
         FileUtils.mkdir_p(folder.to_s)
         folder.to_s
       end
 
+      def sample_files
+        Pathname.new(root_folder).join('sample-files').expand_path.to_s
+      end
+
       private
 
-      def base_folder
-        folder = Pathname.new(__FILE__).dirname.dirname.join('data').expand_path
+      def base_data_folder
+        folder = Pathname.new(root_folder).join('data').expand_path
         FileUtils.mkdir_p(folder.to_s)
         folder.to_s
+      end
+
+      def root_folder
+        Pathname.new(__FILE__).dirname.dirname.expand_path.to_s
       end
     end
   end

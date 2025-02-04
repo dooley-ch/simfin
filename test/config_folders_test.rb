@@ -47,4 +47,12 @@ class ConfigFoldersTest < Minitest::Test
     assert_equal target_folder.to_s, logs_folder, 'Incorrect archive folder returned'
     assert_path_exists logs_folder, 'Archive folder not found'
   end
+
+  def test_should_return_sample_files_folder
+    target_folder = root_folder.join 'sample-files'
+    sample_files_folder = Config::Folders.sample_files
+
+    assert_equal target_folder.to_s, sample_files_folder, 'Incorrect Sample Files folder returned'
+    assert_path_exists sample_files_folder, 'Sample Files folder not found'
+  end
 end

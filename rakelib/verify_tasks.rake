@@ -1,24 +1,33 @@
 # ╔═════════════════════════════════════════════════════════════════════════════════════════════════
-# ║     test_helper.rb
+# ║     verify_tasks.rake
 # ╠═════════════════════════════════════════════════════════════════════════════════════════════════
-# ║     Created: 26.01.2025
+# ║     Created: 03.02.2025
 # ║
 # ║     Copyright (c) 2025 James Dooley <james@dooley.ch>
 # ║
 # ║     History:
-# ║     26.01.2025: Initial version
+# ║     03.02.2025: Initial version
 # ╚═════════════════════════════════════════════════════════════════════════════════════════════════
 # frozen_string_literal: true
 
-require 'minitest/autorun'
-require 'pathname'
+require 'tty-logger'
+require_relative '../lib/verify_task_helpers'
 
-module TestHelpers
-  def base_data_folder
-    Pathname.new(__FILE__).dirname.dirname.join('data')
-  end
+namespace :verify_tasks do
+  task :all, [:section] do |_, args|
+    verify_type = args[:section].to_sym
 
-  def root_folder
-    Pathname.new(__FILE__).dirname.dirname
+    if (console_logger = TTY::Logger.new)
+      case verify_type
+      when :simfin
+        console_logger.info 'Verifying simfin config'
+      when :logging
+        console_logger.info 'Verifying logging config'
+      when :database
+        console_logger.info 'Verifying database'
+      else
+        console_logger.info 'Verifying all'
+      end
+    end
   end
 end

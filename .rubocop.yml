@@ -24,10 +24,10 @@ AllCops:
 #  Description: People have wide screens, use them.
 #  Max: 200
 #
-#Rake/Desc:
-#  Description: Only tasks that should appear when param -T is used require a comment
-#  Enabled: false
-#
+Rake/Desc:
+  Description: Only tasks that should appear when param -T is used require a comment
+  Enabled: false
+
 #Metrics/AbcSize:
 #  Description: Default is too restrictive for rake work
 #  Enabled: false

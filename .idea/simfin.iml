@@ -65,8 +65,20 @@
     <option name="myRootTask">
       <RakeTaskImpl id="rake">
         <subtasks>
-          <RakeTaskImpl description="Confirms the environment is ready for operation" fullCommand="verify" id="verify" />
-          <RakeTaskImpl description="" fullCommand="default" id="default" />
+          <RakeTaskImpl description="Makes a backup copy of the SimFin files located in the downloads folder" fullCommand="archive" id="archive" />
+          <RakeTaskImpl description="Backups the database" fullCommand="backup" id="backup" />
+          <RakeTaskImpl description="Builds the database from the imported zip files" fullCommand="build" id="build" />
+          <RakeTaskImpl description="Deletes the files in the temp and downloads folders" fullCommand="clear" id="clear" />
+          <RakeTaskImpl description="Builds the database from the current zip files" fullCommand="default" id="default" />
+          <RakeTaskImpl description="Imports the zip into the database" fullCommand="import" id="import" />
+          <RakeTaskImpl description="Copies the SimFin sample files to the downloads folder" fullCommand="samples" id="samples" />
+          <RakeTaskImpl description="Confirms the environment is ready for operations" fullCommand="verify[section]" id="verify[section]" />
+          <RakeTaskImpl description="" fullCommand="verify" id="verify" />
+          <RakeTaskImpl id="verify_tasks">
+            <subtasks>
+              <RakeTaskImpl description="" fullCommand="verify_tasks:all" id="all" />
+            </subtasks>
+          </RakeTaskImpl>
         </subtasks>
       </RakeTaskImpl>
     </option>
