@@ -16,70 +16,9 @@ require:
 
 AllCops:
   NewCops: enable
-#  Exclude:
-#    - bin/*
-#    - scratch.rb
-#
-#Layout/LineLength:
-#  Description: People have wide screens, use them.
-#  Max: 200
-#
-Rake/Desc:
-  Description: Only tasks that should appear when param -T is used require a comment
-  Enabled: false
+  Exclude:
+    - bin/*
 
-#Metrics/AbcSize:
-#  Description: Default is too restrictive for rake work
-#  Enabled: false
-#
-#Metrics/CyclomaticComplexity:
-#  Description: Default is too restrictive for rake work
-#  Max: 15
-#
-Metrics/MethodLength:
-  Description: Default is too restrictive for rake work
-  Max: 25
-
-Metrics/AbcSize:
-  Description: Disable for now
-  Enabled: false
-
-Metrics/PerceivedComplexity:
-  Description: Disable for now
-  Enabled: false
-
-Metrics/CyclomaticComplexity:
-  Description: Disable for now
-  Enabled: false
-
-#Metrics/BlockLength:
-#  Description: Default is too restrictive for rake work
-#  Max: 50
-
-#Metrics/ClassLength:
-#  Description: Default is too restrictive for rake work
-#  Max: 200
-#
 Style/Documentation:
   Description: Disable for now
   Enabled: false
-
-Style/GuardClause:
-  Description: Some of it's suggestions are just plain dumb!
-  Enabled: false
-
-Style/ClassVars:
-  Description: Disable for now
-  Enabled: false
-
-Style/CombinableLoops:
-  Description: Disable for now
-  Enabled: false
-
-#Style/GuardClause:
-#  Description: Disable for now
-#  Enabled: false
-#
-Minitest/MultipleAssertions:
-  Description: Default is too restrictive for validating structures
-  Max: 10

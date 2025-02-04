@@ -14,6 +14,7 @@ require 'test_helper'
 require_relative '../lib/sim_fin_name_builder'
 
 class SimFinNameBuilderTest < Minitest::Test
+  # rubocop : disable Minitest/MultipleAssertions
   def test_should_return_all_file_names
     names = SimFinNameBuilder.all
 
@@ -22,4 +23,5 @@ class SimFinNameBuilderTest < Minitest::Test
     assert_includes names, 'markets.zip'
     assert_includes names, 'industries.zip'
   end
+  # rubocop : enable Minitest/MultipleAssertions
 end

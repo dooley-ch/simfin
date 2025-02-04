@@ -14,6 +14,7 @@ require 'test_helper'
 require_relative '../lib/config'
 
 class ConfigSimFinTest < Minitest::Test
+  # rubocop : disable Minitest/MultipleAssertions
   def test_should_return_database_info
     info = Config::SimFin.call
 
@@ -24,4 +25,5 @@ class ConfigSimFinTest < Minitest::Test
     assert_kind_of Array, info.companies
     assert_kind_of Array, info.others
   end
+  # rubocop : enable Minitest/MultipleAssertions
 end

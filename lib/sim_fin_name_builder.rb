@@ -15,6 +15,7 @@ require_relative 'config'
 module SimFinNameBuilder
   # noinspection RubyClassVariableUsageInspection
   class << self
+    # rubocop : disable Metrics/MethodLength, Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity, Metrics/AbcSize
     def all(extension = :zip, logger = nil)
       load_config logger
 
@@ -30,6 +31,7 @@ module SimFinNameBuilder
       files.push(*@@simfin_info.regions.map { |region| "#{region}-shareprices-daily.#{extension}" })
 
       # Add financial statements
+      # rubocop : disable Style/CombinableLoops
       @@simfin_info.regions.each do |region|
         @@simfin_info.companies.each do |company_type|
           # Income Statements
@@ -60,14 +62,16 @@ module SimFinNameBuilder
           end
         end
       end
+      # rubocop : enable Style/CombinableLoops
 
       files
     end
+    # rubocop : enable Metrics/MethodLength, Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity, Metrics/AbcSize
 
     private
 
     def load_config(logger = nil)
-      @@simfin_info ||= Config::SimFin.call(logger)
+      @@simfin_info ||= Config::SimFin.call(logger) # rubocop : disable Style/ClassVars
     end
   end
 end

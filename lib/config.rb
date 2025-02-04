@@ -52,6 +52,7 @@ module Config
 
   module ConfigFile
     class << self
+      # rubocop : disable Metrics/MethodLength
       def load_hash(hash_name, logger = nil)
         config_file = Files.config_file.to_s
         unless File.exist?(config_file)
@@ -76,6 +77,7 @@ module Config
         logger&.error error_message
         raise Errors::ConfigurationError, error_message
       end
+      # rubocop : enable Metrics/MethodLength
     end
   end
 

@@ -14,7 +14,7 @@ require 'tty-logger'
 require_relative '../lib/verify_task_helpers'
 
 namespace :verify_tasks do
-  task :all, [:section] do |_, args|
+  task :all, [:section] do |_, args| # rubocop : disable Rake/Desc
     verify_type = args[:section].to_sym
 
     if (console_logger = TTY::Logger.new)
