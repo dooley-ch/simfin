@@ -585,6 +585,38 @@ alter table income_statement_general
 
 -- region Staging Schema - Tables
 
+-- region Logging Tables
+
+create table staging.log(
+    id bigserial not null,
+    message text not null,
+    message_type_id smallint not null,
+    created_on timestamp with time zone not null default current_timestamp,
+    constraint log_pkey primary key (id)
+);
+
+create table staging.log_message_type(
+     id smallserial not null,
+     message_name name not null,
+     extra_data varchar(1024),
+     active bool  not null default true,
+     record_version smallint  not null default 1,
+     created_on timestamp with time zone  not null default current_timestamp,
+     updated_on timestamp with time zone  not null default current_timestamp,
+     constraint sys_message_type_pkey primary key(id)
+);
+
+alter table staging.log
+    add constraint log_message_type_id_fkey
+        foreign key (message_type_id) references staging.log_message_type (id);
+
+create view staging.v_log as
+    select l.id, l.message, t.message_name, l.created_on FROM staging.log l
+        inner join staging.log_message_type t on t.id = l.message_type_id
+    order by l.created_on desc ;
+
+-- endregion Logging Tables
+
 create table staging.markets
 (
     id smallserial not null ,
@@ -643,24 +675,6 @@ create table staging.company_de
     constraint company_de_pkey primary key(id)
 );
 
-create table staging.company_cd
-(
-    id serial not null,
-    ticker varchar(20),
-    sim_fin_id varchar(20),
-    company_name varchar(100),
-    industry_id char(6),
-    isin varchar(20),
-    end_of_financial_year_month char(2),
-    number_employees varchar(12),
-    business_summary text,
-    market char(2),
-    cik varchar(12),
-    main_currency char(3),
-    created_on timestamp with time zone not null default current_timestamp,
-    constraint company_cd_pkey primary key(id)
-);
-
 create table staging.company_cn
 (
     id serial not null,
@@ -717,24 +731,6 @@ create table staging.share_prices_de
     shares_outstanding  varchar(30),
     created_on timestamp with time zone not null default current_timestamp,
     constraint share_prices_de_pkey primary key (id)
-);
-
-create table staging.share_prices_cd
-(
-    id serial not null,
-    ticker varchar(20),
-    sim_fin_id varchar(20),
-    price_date varchar(10),
-    open_price varchar(30),
-    high_price varchar(30),
-    low_price varchar(30),
-    close_price varchar(30),
-    adj_close_price varchar(30),
-    volume varchar(30),
-    dividend varchar(20),
-    shares_outstanding  varchar(30),
-    created_on timestamp with time zone not null default current_timestamp,
-    constraint share_prices_cd_pkey primary key (id)
 );
 
 create table staging.share_prices_cn
@@ -1312,283 +1308,6 @@ create table staging.income_statement_de_insurance_ttm
 );
 
 -- endregion Germany
-
--- region Canada
-
-create table staging.income_statement_cd_general_annual
-(
-    id serial not null,
-    ticker varchar(20),
-    sim_fin_id varchar(20),
-    currency char(3),
-    fiscal_year char(4),
-    fiscal_period char(2),
-    report_date varchar(10),
-    publish_date varchar(10),
-    restated_date varchar(10),
-    shares_basic varchar(40),
-    shares_diluted varchar(40),
-    revenue varchar(100),
-    cost_of_revenue varchar(100),
-    gross_profit varchar(100),
-    operating_expenses varchar(100),
-    selling_general_administrative varchar(100),
-    research_development varchar(100),
-    depreciation_amortization varchar(100),
-    operating_income_loss varchar(100),
-    non_operating_income_loss varchar(100),
-    interest_expense_net varchar(100),
-    pretax_income_loss_adj varchar(100),
-    abnormal_gains_losses varchar(100),
-    Pretax_income_loss varchar(100),
-    income_tax_expense_benefit_net varchar(100),
-    income_loss_from_continuing_operations varchar(100),
-    net_extraordinary_gains_losses varchar(100),
-    net_income varchar(100),
-    net_income_common varchar(100),
-    created_on timestamp with time zone not null default current_timestamp,
-    constraint income_statement_cd_general_annual_pkey primary key(id)
-);
-
-create table staging.income_statement_cd_general_quarterly
-(
-    id serial not null,
-    ticker varchar(20),
-    sim_fin_id varchar(20),
-    currency char(3),
-    fiscal_year char(4),
-    fiscal_period char(2),
-    report_date varchar(10),
-    publish_date varchar(10),
-    restated_date varchar(10),
-    shares_basic varchar(40),
-    shares_diluted varchar(40),
-    revenue varchar(100),
-    cost_of_revenue varchar(100),
-    gross_profit varchar(100),
-    operating_expenses varchar(100),
-    selling_general_administrative varchar(100),
-    research_development varchar(100),
-    depreciation_amortization varchar(100),
-    operating_income_loss varchar(100),
-    non_operating_income_loss varchar(100),
-    interest_expense_net varchar(100),
-    pretax_income_loss_adj varchar(100),
-    abnormal_gains_losses varchar(100),
-    Pretax_income_loss varchar(100),
-    income_tax_expense_benefit_net varchar(100),
-    income_loss_from_continuing_operations varchar(100),
-    net_extraordinary_gains_losses varchar(100),
-    net_income varchar(100),
-    net_income_common varchar(100),
-    created_on timestamp with time zone not null default current_timestamp,
-    constraint income_statement_cd_general_quarterly_pkey primary key(id)
-);
-
-create table staging.income_statement_cd_general_ttm
-(
-    id serial not null,
-    ticker varchar(20),
-    sim_fin_id varchar(20),
-    currency char(3),
-    fiscal_year char(4),
-    fiscal_period char(2),
-    report_date varchar(10),
-    publish_date varchar(10),
-    restated_date varchar(10),
-    shares_basic varchar(40),
-    shares_diluted varchar(40),
-    revenue varchar(100),
-    cost_of_revenue varchar(100),
-    gross_profit varchar(100),
-    operating_expenses varchar(100),
-    selling_general_administrative varchar(100),
-    research_development varchar(100),
-    depreciation_amortization varchar(100),
-    operating_income_loss varchar(100),
-    non_operating_income_loss varchar(100),
-    interest_expense_net varchar(100),
-    pretax_income_loss_adj varchar(100),
-    abnormal_gains_losses varchar(100),
-    Pretax_income_loss varchar(100),
-    income_tax_expense_benefit_net varchar(100),
-    income_loss_from_continuing_operations varchar(100),
-    net_extraordinary_gains_losses varchar(100),
-    net_income varchar(100),
-    net_income_common varchar(100),
-    created_on timestamp with time zone not null default current_timestamp,
-    constraint income_statement_cd_general_ttm_pkey primary key(id)
-);
-
-create table staging.income_statement_cd_bank_annual
-(
-    id serial not null,
-    ticker varchar(20),
-    sim_fin_id varchar(20),
-    currency char(3),
-    fiscal_year char(4),
-    fiscal_period char(2),
-    report_date varchar(10),
-    publish_date varchar(10),
-    restated_date varchar(10),
-    shares_basic varchar(40),
-    shares_diluted varchar(40),
-    revenue varchar(40),
-    provision_for_loan_losses varchar(40),
-    net_revenue_after_provisions varchar(40),
-    total_non_interest_expense varchar(40),
-    operating_income_loss varchar(40),
-    non_operating_income_loss varchar(40),
-    pretax_income_loss varchar(40),
-    income_tax_expense_benefit_net varchar(40),
-    income_loss_from_continuing_operations varchar(40),
-    net_extraordinary_gains_losses varchar(40),
-    net_income varchar(40),
-    net_income_common varchar(40),
-    created_on timestamp with time zone not null default current_timestamp,
-    constraint income_statement_cd_bank_annual_pkey primary key(id)
-);
-
-create table staging.income_statement_cd_bank_quarterly
-(
-    id serial not null,
-    ticker varchar(20),
-    sim_fin_id varchar(20),
-    currency char(3),
-    fiscal_year char(4),
-    fiscal_period char(2),
-    report_date varchar(10),
-    publish_date varchar(10),
-    restated_date varchar(10),
-    shares_basic varchar(40),
-    shares_diluted varchar(40),
-    revenue varchar(40),
-    provision_for_loan_losses varchar(40),
-    net_revenue_after_provisions varchar(40),
-    total_non_interest_expense varchar(40),
-    operating_income_loss varchar(40),
-    non_operating_income_loss varchar(40),
-    pretax_income_loss varchar(40),
-    income_tax_expense_benefit_net varchar(40),
-    income_loss_from_continuing_operations varchar(40),
-    net_extraordinary_gains_losses varchar(40),
-    net_income varchar(40),
-    net_income_common varchar(40),
-    created_on timestamp with time zone not null default current_timestamp,
-    constraint income_statement_cd_bank_quarterly_pkey primary key(id)
-);
-
-create table staging.income_statement_cd_bank_ttm
-(
-    id serial not null,
-    ticker varchar(20),
-    sim_fin_id varchar(20),
-    currency char(3),
-    fiscal_year char(4),
-    fiscal_period char(2),
-    report_date varchar(10),
-    publish_date varchar(10),
-    restated_date varchar(10),
-    shares_basic varchar(40),
-    shares_diluted varchar(40),
-    revenue varchar(40),
-    provision_for_loan_losses varchar(40),
-    net_revenue_after_provisions varchar(40),
-    total_non_interest_expense varchar(40),
-    operating_income_loss varchar(40),
-    non_operating_income_loss varchar(40),
-    pretax_income_loss varchar(40),
-    income_tax_expense_benefit_net varchar(40),
-    income_loss_from_continuing_operations varchar(40),
-    net_extraordinary_gains_losses varchar(40),
-    net_income varchar(40),
-    net_income_common varchar(40),
-    created_on timestamp with time zone not null default current_timestamp,
-    constraint income_statement_cd_bank_ttm_pkey primary key(id)
-);
-
-create table staging.income_statement_cd_insurance_annual
-(
-    id serial not null,
-    ticker varchar(20),
-    sim_fin_id varchar(20),
-    currency char(3),
-    fiscal_year char(4),
-    fiscal_period char(2),
-    report_date varchar(10),
-    publish_date varchar(10),
-    restated_date varchar(10),
-    shares_basic varchar(40),
-    shares_diluted varchar(40),
-    revenue varchar(40),
-    total_claims_losses varchar(40),
-    operating_income_loss varchar(40),
-    pretax_income_loss varchar(40),
-    income_tax_expense_benefit_net varchar(40),
-    income_loss_from_affiliates_net_of_taxes varchar(40),
-    income_loss_from_continuing_operations varchar(40),
-    net_extraordinary_gains_losses varchar(40),
-    net_income varchar(40),
-    net_income_common varchar(40),
-    created_on timestamp with time zone not null default current_timestamp,
-    constraint income_statement_cd_insurance_annual_pkey primary key(id)
-);
-
-create table staging.income_statement_cd_insurance_quarterly
-(
-    id serial not null,
-    ticker varchar(20),
-    sim_fin_id varchar(20),
-    currency char(3),
-    fiscal_year char(4),
-    fiscal_period char(2),
-    report_date varchar(10),
-    publish_date varchar(10),
-    restated_date varchar(10),
-    shares_basic varchar(40),
-    shares_diluted varchar(40),
-    revenue varchar(40),
-    total_claims_losses varchar(40),
-    operating_income_loss varchar(40),
-    pretax_income_loss varchar(40),
-    income_tax_expense_benefit_net varchar(40),
-    income_loss_from_affiliates_net_of_taxes varchar(40),
-    income_loss_from_continuing_operations varchar(40),
-    net_extraordinary_gains_losses varchar(40),
-    net_income varchar(40),
-    net_income_common varchar(40),
-    created_on timestamp with time zone not null default current_timestamp,
-    constraint income_statement_cd_insurance_quarterly_pkey primary key(id)
-);
-
-create table staging.income_statement_cd_insurance_ttm
-(
-    id serial not null,
-    ticker varchar(20),
-    sim_fin_id varchar(20),
-    currency char(3),
-    fiscal_year char(4),
-    fiscal_period char(2),
-    report_date varchar(10),
-    publish_date varchar(10),
-    restated_date varchar(10),
-    shares_basic varchar(40),
-    shares_diluted varchar(40),
-    revenue varchar(40),
-    total_claims_losses varchar(40),
-    operating_income_loss varchar(40),
-    pretax_income_loss varchar(40),
-    income_tax_expense_benefit_net varchar(40),
-    income_loss_from_affiliates_net_of_taxes varchar(40),
-    income_loss_from_continuing_operations varchar(40),
-    net_extraordinary_gains_losses varchar(40),
-    net_income varchar(40),
-    net_income_common varchar(40),
-    created_on timestamp with time zone not null default current_timestamp,
-    constraint income_statement_cd_insurance_ttm_pkey primary key(id)
-);
-
--- endregion Canada
 
 -- region China
 
@@ -2466,304 +2185,6 @@ create table staging.cash_flow_de_insurance_ttm
 );
 
 -- endregion Germany
-
--- region Canada
-
-create table staging.cash_flow_cd_general_annual
-(
-    id serial not null,
-    ticker varchar(20),
-    sim_fin_id varchar(20),
-    currency char(3),
-    fiscal_year char(4),
-    fiscal_period char(2),
-    report_date varchar(10),
-    publish_date varchar(10),
-    restated_date varchar(10),
-    shares_basic varchar(40),
-    shares_diluted varchar(40),
-    net_income_starting_line varchar(100),
-    depreciation_amortization varchar(100),
-    non_cash_items varchar(100),
-    change_in_working_capital varchar(100),
-    change_in_accounts_receivable varchar(100),
-    change_in_inventories varchar(100),
-    change_in_accounts_payable varchar(100),
-    change_in_other varchar(100),
-    net_cash_from_operating_activities varchar(100),
-    change_in_fixed_assets_intangibles varchar(100),
-    net_change_in_long_term_investment varchar(100),
-    net_cash_from_acquisitions_divestitures varchar(100),
-    net_cash_from_investing_activities varchar(100),
-    dividends_paid varchar(100),
-    cash_from_repayment_of_debt varchar(100),
-    cash_from_repurchase_of_equity varchar(100),
-    net_cash_from_financing_activities varchar(100),
-    net_change_in_cash varchar(100),
-    created_on timestamp with time zone not null default current_timestamp,
-    constraint imp_cd_us_cash_flow_general_annual_pkey primary key(id)
-);
-
-create table staging.cash_flow_cd_general_quarterly
-(
-    id serial not null,
-    ticker varchar(20),
-    sim_fin_id varchar(20),
-    currency char(3),
-    fiscal_year char(4),
-    fiscal_period char(2),
-    report_date varchar(10),
-    publish_date varchar(10),
-    restated_date varchar(10),
-    shares_basic varchar(40),
-    shares_diluted varchar(40),
-    net_income_starting_line varchar(100),
-    depreciation_amortization varchar(100),
-    non_cash_items varchar(100),
-    change_in_working_capital varchar(100),
-    change_in_accounts_receivable varchar(100),
-    change_in_inventories varchar(100),
-    change_in_accounts_payable varchar(100),
-    change_in_other varchar(100),
-    net_cash_from_operating_activities varchar(100),
-    change_in_fixed_assets_intangibles varchar(100),
-    net_change_in_long_term_investment varchar(100),
-    net_cash_from_acquisitions_divestitures varchar(100),
-    net_cash_from_investing_activities varchar(100),
-    dividends_paid varchar(100),
-    cash_from_repayment_of_debt varchar(100),
-    cash_from_repurchase_of_equity varchar(100),
-    net_cash_from_financing_activities varchar(100),
-    net_change_in_cash varchar(100),
-    created_on timestamp with time zone not null default current_timestamp,
-    constraint imp_cd_us_cash_flow_general_quarterly_pkey primary key(id)
-);
-
-create table staging.cash_flow_cd_general_ttm
-(
-    id serial not null,
-    ticker varchar(20),
-    sim_fin_id varchar(20),
-    currency char(3),
-    fiscal_year char(4),
-    fiscal_period char(2),
-    report_date varchar(10),
-    publish_date varchar(10),
-    restated_date varchar(10),
-    shares_basic varchar(40),
-    shares_diluted varchar(40),
-    net_income_starting_line varchar(100),
-    depreciation_amortization varchar(100),
-    non_cash_items varchar(100),
-    change_in_working_capital varchar(100),
-    change_in_accounts_receivable varchar(100),
-    change_in_inventories varchar(100),
-    change_in_accounts_payable varchar(100),
-    change_in_other varchar(100),
-    net_cash_from_operating_activities varchar(100),
-    change_in_fixed_assets_intangibles varchar(100),
-    net_change_in_long_term_investment varchar(100),
-    net_cash_from_acquisitions_divestitures varchar(100),
-    net_cash_from_investing_activities varchar(100),
-    dividends_paid varchar(100),
-    cash_from_repayment_of_debt varchar(100),
-    cash_from_repurchase_of_equity varchar(100),
-    net_cash_from_financing_activities varchar(100),
-    net_change_in_cash varchar(100),
-    created_on timestamp with time zone not null default current_timestamp,
-    constraint imp_cd_us_cash_flow_general_ttm_pkey primary key(id)
-);
-
-create table staging.cash_flow_cd_bank_annual
-(
-    id serial not null,
-    ticker varchar(20),
-    sim_fin_id varchar(20),
-    currency char(3),
-    fiscal_year char(4),
-    fiscal_period char(2),
-    report_date varchar(10),
-    publish_date varchar(10),
-    restated_date varchar(10),
-    shares_basic varchar(40),
-    shares_diluted varchar(40),
-    net_income_starting_line varchar(100),
-    depreciation_amortization varchar(100),
-    provision_for_loan_losses varchar(100),
-    non_cash_items varchar(100),
-    change_in_working_capital varchar(100),
-    net_cash_from_operating_activities varchar(100),
-    change_in_fixed_assets_intangibles varchar(100),
-    net_change_in_loans_interbank varchar(100),
-    net_cash_from_acquisitions_divestitures varchar(100),
-    net_cash_from_investing_activities varchar(100),
-    dividends_paid varchar(100),
-    cash_from_repayment_of_debt varchar(100),
-    cash_from_repurchase_of_equity varchar(100),
-    net_cash_from_financing_activities varchar(100),
-    effect_of_foreign_exchange_rates varchar(100),
-    net_change_in_cash varchar(100),
-    created_on timestamp with time zone not null default current_timestamp,
-    constraint cash_flow_cd_bank_annual_pkey primary key(id)
-);
-
-create table staging.cash_flow_cd_bank_quarterly
-(
-    id serial not null,
-    ticker varchar(20),
-    sim_fin_id varchar(20),
-    currency char(3),
-    fiscal_year char(4),
-    fiscal_period char(2),
-    report_date varchar(10),
-    publish_date varchar(10),
-    restated_date varchar(10),
-    shares_basic varchar(40),
-    shares_diluted varchar(40),
-    net_income_starting_line varchar(100),
-    depreciation_amortization varchar(100),
-    provision_for_loan_losses varchar(100),
-    non_cash_items varchar(100),
-    change_in_working_capital varchar(100),
-    net_cash_from_operating_activities varchar(100),
-    change_in_fixed_assets_intangibles varchar(100),
-    net_change_in_loans_interbank varchar(100),
-    net_cash_from_acquisitions_divestitures varchar(100),
-    net_cash_from_investing_activities varchar(100),
-    dividends_paid varchar(100),
-    cash_from_repayment_of_debt varchar(100),
-    cash_from_repurchase_of_equity varchar(100),
-    net_cash_from_financing_activities varchar(100),
-    effect_of_foreign_exchange_rates varchar(100),
-    net_change_in_cash varchar(100),
-    created_on timestamp with time zone not null default current_timestamp,
-    constraint cash_flow_cd_bank_quarterly_pkey primary key(id)
-);
-
-create table staging.cash_flow_cd_bank_ttm
-(
-    id serial not null,
-    ticker varchar(20),
-    sim_fin_id varchar(20),
-    currency char(3),
-    fiscal_year char(4),
-    fiscal_period char(2),
-    report_date varchar(10),
-    publish_date varchar(10),
-    restated_date varchar(10),
-    shares_basic varchar(40),
-    shares_diluted varchar(40),
-    net_income_starting_line varchar(100),
-    depreciation_amortization varchar(100),
-    provision_for_loan_losses varchar(100),
-    non_cash_items varchar(100),
-    change_in_working_capital varchar(100),
-    net_cash_from_operating_activities varchar(100),
-    change_in_fixed_assets_intangibles varchar(100),
-    net_change_in_loans_interbank varchar(100),
-    net_cash_from_acquisitions_divestitures varchar(100),
-    net_cash_from_investing_activities varchar(100),
-    dividends_paid varchar(100),
-    cash_from_repayment_of_debt varchar(100),
-    cash_from_repurchase_of_equity varchar(100),
-    net_cash_from_financing_activities varchar(100),
-    effect_of_foreign_exchange_rates varchar(100),
-    net_change_in_cash varchar(100),
-    created_on timestamp with time zone not null default current_timestamp,
-    constraint cash_flow_cd_bank_ttm_pkey primary key(id)
-);
-
-create table staging.cash_flow_cd_insurance_annual
-(
-    id serial not null,
-    ticker varchar(20),
-    sim_fin_id varchar(20),
-    currency char(3),
-    fiscal_year char(4),
-    fiscal_period char(2),
-    report_date varchar(10),
-    publish_date varchar(10),
-    restated_date varchar(10),
-    shares_basic varchar(40),
-    shares_diluted varchar(40),
-    net_income_starting_line varchar(100),
-    depreciation_amortization varchar(100),
-    non_cash_items varchar(100),
-    net_cash_from_operating_activities varchar(100),
-    change_in_fixed_assets_intangibles varchar(100),
-    net_change_in_investments varchar(100),
-    net_cash_from_investing_activities varchar(100),
-    dividends_paid varchar(100),
-    cash_from_repayment_of_debt varchar(100),
-    cash_from_repurchase_of_equity varchar(100),
-    net_cash_from_financing_activities varchar(100),
-    effect_of_foreign_exchange_rate varchar(100),
-    net_change_in_cash varchar(100),
-    created_on timestamp with time zone not null default current_timestamp,
-    constraint cash_flow_cd_insurance_annual_pkey primary key(id)
-);
-
-create table staging.cash_flow_cd_insurance_quarterly
-(
-    id serial not null,
-    ticker varchar(20),
-    sim_fin_id varchar(20),
-    currency char(3),
-    fiscal_year char(4),
-    fiscal_period char(2),
-    report_date varchar(10),
-    publish_date varchar(10),
-    restated_date varchar(10),
-    shares_basic varchar(40),
-    shares_diluted varchar(40),
-    net_income_starting_line varchar(100),
-    depreciation_amortization varchar(100),
-    non_cash_items varchar(100),
-    net_cash_from_operating_activities varchar(100),
-    change_in_fixed_assets_intangibles varchar(100),
-    net_change_in_investments varchar(100),
-    net_cash_from_investing_activities varchar(100),
-    dividends_paid varchar(100),
-    cash_from_repayment_of_debt varchar(100),
-    cash_from_repurchase_of_equity varchar(100),
-    net_cash_from_financing_activities varchar(100),
-    effect_of_foreign_exchange_rate varchar(100),
-    net_change_in_cash varchar(100),
-    created_on timestamp with time zone not null default current_timestamp,
-    constraint cash_flow_cd_insurance_quarterly_pkey primary key(id)
-);
-
-create table staging.cash_flow_cd_insurance_ttm
-(
-    id serial not null,
-    ticker varchar(20),
-    sim_fin_id varchar(20),
-    currency char(3),
-    fiscal_year char(4),
-    fiscal_period char(2),
-    report_date varchar(10),
-    publish_date varchar(10),
-    restated_date varchar(10),
-    shares_basic varchar(40),
-    shares_diluted varchar(40),
-    net_income_starting_line varchar(100),
-    depreciation_amortization varchar(100),
-    non_cash_items varchar(100),
-    net_cash_from_operating_activities varchar(100),
-    change_in_fixed_assets_intangibles varchar(100),
-    net_change_in_investments varchar(100),
-    net_cash_from_investing_activities varchar(100),
-    dividends_paid varchar(100),
-    cash_from_repayment_of_debt varchar(100),
-    cash_from_repurchase_of_equity varchar(100),
-    net_cash_from_financing_activities varchar(100),
-    effect_of_foreign_exchange_rate varchar(100),
-    net_change_in_cash varchar(100),
-    created_on timestamp with time zone not null default current_timestamp,
-    constraint cash_flow_cd_insurance_ttm_pkey primary key(id)
-);
-
--- endregion Canada
 
 -- region China
 
@@ -3699,322 +3120,6 @@ create table staging.balance_sheet_de_insurance_ttm
 
 -- endregion Germany
 
--- region Canada
-
-create table staging.balance_sheet_cd_general_annual
-(
-    id serial not null,
-    ticker varchar(20),
-    sim_fin_id varchar(20),
-    currency char(3),
-    fiscal_year char(4),
-    fiscal_period char(2),
-    report_date varchar(10),
-    publish_date varchar(10),
-    restated_date varchar(10),
-    shares_basic varchar(40),
-    shares_diluted varchar(40),
-    cash_cash_equivalents_short_term_investments varchar(100),
-    accounts_notes_receivable varchar(100),
-    inventories varchar(100),
-    total_current_assets varchar(100),
-    property_plant_equipment varchar(100),
-    long_term_investments_Receivables	 varchar(100),
-    other_long_term_assets varchar(100),
-    total_noncurrent_assets varchar(100),
-    total_Assets varchar(100),
-    payables_accruals varchar(100),
-    short_term_debt varchar(100),
-    total_current_liabilities varchar(100),
-    long_term_debt varchar(100),
-    total_noncurrent_liabilities varchar(100),
-    total_liabilities varchar(100),
-    share_capital_additional_paid_In_capital varchar(100),
-    treasury_stock varchar(100),
-    retained_earnings varchar(100),
-    total_equity varchar(100),
-    total_liabilities_equity varchar(100),
-    created_on timestamp with time zone not null default current_timestamp,
-    constraint balance_sheet_cd_general_annual_pkey primary key(id)
-);
-
-create table staging.balance_sheet_cd_general_quarterly
-(
-    id serial not null,
-    ticker varchar(20),
-    sim_fin_id varchar(20),
-    currency char(3),
-    fiscal_year char(4),
-    fiscal_period char(2),
-    report_date varchar(10),
-    publish_date varchar(10),
-    restated_date varchar(10),
-    shares_basic varchar(40),
-    shares_diluted varchar(40),
-    cash_cash_equivalents_short_term_investments varchar(100),
-    accounts_notes_receivable varchar(100),
-    inventories varchar(100),
-    total_current_assets varchar(100),
-    property_plant_equipment varchar(100),
-    long_term_investments_Receivables	 varchar(100),
-    other_long_term_assets varchar(100),
-    total_noncurrent_assets varchar(100),
-    total_Assets varchar(100),
-    payables_accruals varchar(100),
-    short_term_debt varchar(100),
-    total_current_liabilities varchar(100),
-    long_term_debt varchar(100),
-    total_noncurrent_liabilities varchar(100),
-    total_liabilities varchar(100),
-    share_capital_additional_paid_In_capital varchar(100),
-    treasury_stock varchar(100),
-    retained_earnings varchar(100),
-    total_equity varchar(100),
-    total_liabilities_equity varchar(100),
-    created_on timestamp with time zone not null default current_timestamp,
-    constraint balance_sheet_cd_general_quarterly_pkey primary key(id)
-);
-
-create table staging.balance_sheet_cd_general_ttm
-(
-    id serial not null,
-    ticker varchar(20),
-    sim_fin_id varchar(20),
-    currency char(3),
-    fiscal_year char(4),
-    fiscal_period char(2),
-    report_date varchar(10),
-    publish_date varchar(10),
-    restated_date varchar(10),
-    shares_basic varchar(40),
-    shares_diluted varchar(40),
-    cash_cash_equivalents_short_term_investments varchar(100),
-    accounts_notes_receivable varchar(100),
-    inventories varchar(100),
-    total_current_assets varchar(100),
-    property_plant_equipment varchar(100),
-    long_term_investments_Receivables	 varchar(100),
-    other_long_term_assets varchar(100),
-    total_noncurrent_assets varchar(100),
-    total_Assets varchar(100),
-    payables_accruals varchar(100),
-    short_term_debt varchar(100),
-    total_current_liabilities varchar(100),
-    long_term_debt varchar(100),
-    total_noncurrent_liabilities varchar(100),
-    total_liabilities varchar(100),
-    share_capital_additional_paid_In_capital varchar(100),
-    treasury_stock varchar(100),
-    retained_earnings varchar(100),
-    total_equity varchar(100),
-    total_liabilities_equity varchar(100),
-    created_on timestamp with time zone not null default current_timestamp,
-    constraint balance_sheet_cd_general_ttm_pkey primary key(id)
-);
-
-create table staging.balance_sheet_cd_bank_annual
-(
-    id serial not null,
-    ticker varchar(20),
-    sim_fin_id varchar(20),
-    currency char(3),
-    fiscal_year char(4),
-    fiscal_period char(2),
-    report_date varchar(10),
-    publish_date varchar(10),
-    restated_date varchar(10),
-    shares_basic varchar(40),
-    shares_diluted varchar(40),
-    cash_cash_equivalents_short_term_investments varchar(100),
-    interbank_assets varchar(100),
-    short_long_term_investments varchar(100),
-    accounts_notes_receivable varchar(100),
-    net_loans varchar(100),
-    net_fixed_Assets varchar(100),
-    total_assets varchar(100),
-    total_deposits varchar(100),
-    short_term_Debt varchar(100),
-    Long_term_debt varchar(100),
-    Total_liabilities varchar(100),
-    preferred_equity varchar(100),
-    share_capital_additional_paid_In_capital varchar(100),
-    treasury_stock varchar(100),
-    retained_earnings varchar(100),
-    total_equity varchar(100),
-    total_liabilities_equity varchar(100),
-    created_on timestamp with time zone not null default current_timestamp,
-    constraint balance_sheet_cd_bank_annual_pkey primary key(id)
-);
-
-create table staging.balance_sheet_cd_bank_quarterly
-(
-    id serial not null,
-    ticker varchar(20),
-    sim_fin_id varchar(20),
-    currency char(3),
-    fiscal_year char(4),
-    fiscal_period char(2),
-    report_date varchar(10),
-    publish_date varchar(10),
-    restated_date varchar(10),
-    shares_basic varchar(40),
-    shares_diluted varchar(40),
-    cash_cash_equivalents_short_term_investments varchar(100),
-    interbank_assets varchar(100),
-    short_long_term_investments varchar(100),
-    accounts_notes_receivable varchar(100),
-    net_loans varchar(100),
-    net_fixed_Assets varchar(100),
-    total_assets varchar(100),
-    total_deposits varchar(100),
-    short_term_Debt varchar(100),
-    Long_term_debt varchar(100),
-    Total_liabilities varchar(100),
-    preferred_equity varchar(100),
-    share_capital_additional_paid_In_capital varchar(100),
-    treasury_stock varchar(100),
-    retained_earnings varchar(100),
-    total_equity varchar(100),
-    total_liabilities_equity varchar(100),
-    created_on timestamp with time zone not null default current_timestamp,
-    constraint balance_sheet_cd_bank_quarterly_pkey primary key(id)
-);
-
-create table staging.balance_sheet_cd_bank_ttm
-(
-    id serial not null,
-    ticker varchar(20),
-    sim_fin_id varchar(20),
-    currency char(3),
-    fiscal_year char(4),
-    fiscal_period char(2),
-    report_date varchar(10),
-    publish_date varchar(10),
-    restated_date varchar(10),
-    shares_basic varchar(40),
-    shares_diluted varchar(40),
-    cash_cash_equivalents_short_term_investments varchar(100),
-    interbank_assets varchar(100),
-    short_long_term_investments varchar(100),
-    accounts_notes_receivable varchar(100),
-    net_loans varchar(100),
-    net_fixed_Assets varchar(100),
-    total_assets varchar(100),
-    total_deposits varchar(100),
-    short_term_Debt varchar(100),
-    Long_term_debt varchar(100),
-    Total_liabilities varchar(100),
-    preferred_equity varchar(100),
-    share_capital_additional_paid_In_capital varchar(100),
-    treasury_stock varchar(100),
-    retained_earnings varchar(100),
-    total_equity varchar(100),
-    total_liabilities_equity varchar(100),
-    created_on timestamp with time zone not null default current_timestamp,
-    constraint balance_sheet_cd_bank_ttm_pkey primary key(id)
-);
-
-create table staging.balance_sheet_cd_insurance_annual
-(
-    id serial not null,
-    ticker varchar(20),
-    sim_fin_id varchar(20),
-    currency char(3),
-    fiscal_year char(4),
-    fiscal_period char(2),
-    report_date varchar(10),
-    publish_date varchar(10),
-    restated_date varchar(10),
-    shares_basic varchar(40),
-    shares_diluted varchar(40),
-    total_investments varchar(100),
-    cash_cash_equivalents_short_term_investments varchar(100),
-    accounts_notes_receivable varchar(100),
-    property_plant_equipment_net varchar(100),
-    total_assets varchar(100),
-    insurance_reserves varchar(100),
-    short_term_debt varchar(100),
-    long_term_debt varchar(100),
-    total_liabilities varchar(100),
-    preferred_equity varchar(100),
-    policyholders_equity varchar(100),
-    share_capital_additional_paid_in_capital varchar(100),
-    treasury_stock varchar(100),
-    retained_earnings varchar(100),
-    total_equity varchar(100),
-    total_liabilities_equity varchar(100),
-    created_on timestamp with time zone not null default current_timestamp,
-    constraint balance_sheet_cd_insurance_annual_pkey primary key(id)
-);
-
-create table staging.balance_sheet_cd_insurance_quarterly
-(
-    id serial not null,
-    ticker varchar(20),
-    sim_fin_id varchar(20),
-    currency char(3),
-    fiscal_year char(4),
-    fiscal_period char(2),
-    report_date varchar(10),
-    publish_date varchar(10),
-    restated_date varchar(10),
-    shares_basic varchar(40),
-    shares_diluted varchar(40),
-    total_investments varchar(100),
-    cash_cash_equivalents_short_term_investments varchar(100),
-    accounts_notes_receivable varchar(100),
-    property_plant_equipment_net varchar(100),
-    total_assets varchar(100),
-    insurance_reserves varchar(100),
-    short_term_debt varchar(100),
-    long_term_debt varchar(100),
-    total_liabilities varchar(100),
-    preferred_equity varchar(100),
-    policyholders_equity varchar(100),
-    share_capital_additional_paid_in_capital varchar(100),
-    treasury_stock varchar(100),
-    retained_earnings varchar(100),
-    total_equity varchar(100),
-    total_liabilities_equity varchar(100),
-    created_on timestamp with time zone not null default current_timestamp,
-    constraint balance_sheet_cd_insurance_quarterly_pkey primary key(id)
-);
-
-create table staging.balance_sheet_cd_insurance_ttm
-(
-    id serial not null,
-    ticker varchar(20),
-    sim_fin_id varchar(20),
-    currency char(3),
-    fiscal_year char(4),
-    fiscal_period char(2),
-    report_date varchar(10),
-    publish_date varchar(10),
-    restated_date varchar(10),
-    shares_basic varchar(40),
-    shares_diluted varchar(40),
-    total_investments varchar(100),
-    cash_cash_equivalents_short_term_investments varchar(100),
-    accounts_notes_receivable varchar(100),
-    property_plant_equipment_net varchar(100),
-    total_assets varchar(100),
-    insurance_reserves varchar(100),
-    short_term_debt varchar(100),
-    long_term_debt varchar(100),
-    total_liabilities varchar(100),
-    preferred_equity varchar(100),
-    policyholders_equity varchar(100),
-    share_capital_additional_paid_in_capital varchar(100),
-    treasury_stock varchar(100),
-    retained_earnings varchar(100),
-    total_equity varchar(100),
-    total_liabilities_equity varchar(100),
-    created_on timestamp with time zone not null default current_timestamp,
-    constraint balance_sheet_cd_insurance_ttm_pkey primary key(id)
-);
-
--- endregion Canada
-
 -- region China
 
 create table staging.balance_sheet_cn_general_annual
@@ -4334,3 +3439,79 @@ create table staging.balance_sheet_cn_insurance_ttm
 -- endregion Balance Sheet Tables
     
 -- endregion Staging Schema - Tables
+
+-- region Logging Code
+
+create or replace function staging.fn_log_info_id()
+    returns smallint
+as $body$
+declare
+    type_id smallint;
+begin
+    select id into type_id from staging.log_message_type where (message_name = 'Info');
+    return type_id;
+end;
+$body$ language plpgsql;
+
+create or replace function staging.fn_log_warn_id()
+    returns smallint
+AS $body$
+declare
+    type_id smallint;
+begin
+    select id into type_id from staging.log_message_type where (message_name = 'Warn');
+    return type_id;
+end;
+$body$ language plpgsql;
+
+create or replace function staging.fn_log_error_id()
+    returns smallint
+AS $body$
+declare
+    type_id smallint;
+begin
+    select id into type_id from staging.log_message_type where (message_name = 'Error');
+    return type_id;
+end;
+$body$ language plpgsql;
+
+create or replace function staging.fn_log_debug_id()
+    returns smallint
+AS $body$
+declare
+    type_id smallint;
+begin
+    select id into type_id from staging.log_message_type where (message_name = 'Debug');
+    return type_id;
+end;
+$body$ language plpgsql;
+
+create or replace procedure staging.sp_log_info(IN log_message varchar)
+AS $body$
+begin
+    insert into staging.log(message, message_type_id) values (log_message, staging.fn_log_info_id());
+end;
+$body$ language plpgsql;
+
+create or replace procedure staging.sp_log_warn(IN log_message varchar)
+AS $body$
+begin
+    insert into staging.log(message, message_type_id) values (log_message, staging.fn_log_warn_id());
+end;
+$body$ language plpgsql;
+
+create or replace procedure staging.sp_log_error(IN log_message varchar)
+AS $body$
+begin
+    insert into staging.log(message, message_type_id) values (log_message, staging.fn_log_error_id());
+end;
+$body$ language plpgsql;
+
+create or replace procedure staging.sp_log_debug(IN log_message varchar)
+AS $body$
+begin
+    insert into staging.log(message, message_type_id) values (log_message, staging.fn_log_debug_id());
+end;
+$body$ language plpgsql;
+
+-- endregion Logging Code

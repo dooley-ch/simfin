@@ -87,6 +87,13 @@
           <RakeTaskImpl description="" fullCommand="build" id="build" />
           <RakeTaskImpl description="" fullCommand="clean" id="clean" />
           <RakeTaskImpl description="" fullCommand="import" id="import" />
+          <RakeTaskImpl id="import_tasks">
+            <subtasks>
+              <RakeTaskImpl description="" fullCommand="import_tasks:all" id="all" />
+              <RakeTaskImpl description="" fullCommand="import_tasks:import_files" id="import_files" />
+              <RakeTaskImpl description="" fullCommand="import_tasks:unzip_files" id="unzip_files" />
+            </subtasks>
+          </RakeTaskImpl>
           <RakeTaskImpl description="" fullCommand="samples" id="samples" />
           <RakeTaskImpl description="" fullCommand="verify" id="verify" />
           <RakeTaskImpl id="verify_tasks">
