@@ -3515,3 +3515,26 @@ end;
 $body$ language plpgsql;
 
 -- endregion Logging Code
+
+-- region Importing Code
+
+create or replace procedure staging.sp_import_table(in table_name varchar, in import_query varchar)
+AS $body$
+declare
+    reset_query varchar;
+    rows_inserted integer;
+begin
+    reset_query := 'truncate table staging.' || table_name || ' restart identity;';
+    execute reset_query;
+
+    execute import_query;
+    get diagnostics rows_inserted = row_count;
+
+    call staging.sp_log_info('Rows imported into table : ' || table_name || ': ' || rows_inserted::varchar);
+exception when others then
+    call staging.sp_log_error('sp_import_table(' || table_name || ') failed with with error message: ' || sqlstate::VARCHAR || ' - ' || sqlerrm);
+    raise;
+end;
+$body$ language plpgsql;
+
+-- endregion Importing Code
