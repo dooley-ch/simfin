@@ -11,13 +11,16 @@
 # frozen_string_literal: true
 
 require 'pastel'
+require 'tty-table'
+require_relative 'sim_fin_name_builder'
+require_relative 'config'
 
 module VerifyTaskHelpers
   module ReportHelpers
     # noinspection RubyResolve
     def report_errors(section_name, errors)
       pastel = Pastel.new
-      puts pastel.red.on_black.bold("\nThe #{section_name} configuration has errors:\n")
+      puts pastel.red.bold("\nThe #{section_name} configuration has errors:\n")
       errors.each do |error|
         puts pastel.blue.on_black.bold(" - #{error}")
       end
@@ -26,7 +29,114 @@ module VerifyTaskHelpers
     # noinspection RubyResolve
     def report_success(section_name)
       pastel = Pastel.new
-      puts pastel.green.on_black.bold("\nThe #{section_name} configuration is valid\n")
+      puts pastel.green.bold("\nThe #{section_name} configuration is valid\n")
+    end
+  end
+
+  module Files
+    class << self
+      include ReportHelpers
+
+      # rubocop : disable Metrics/MethodLength, Metrics/AbcSize, Metrics/CyclomaticComplexity, Lint/RedundantCopDisableDirective
+      # noinspection RubyControlFlowConversionInspection
+      def call(logger = nil, report_outcome: true)
+        logger&.debug 'SimFin check executed'
+
+        missing_files = []
+
+        required_files = SimFinNameBuilder.all
+        downloads_folder_contents = FileList["#{Config::Folders.downloads}/*.zip"].map do |file_name|
+          File.basename(file_name)
+        end.to_ary
+
+        required_files.each do |file|
+          missing_files << file unless downloads_folder_contents.include?(file)
+        end
+
+        if missing_files.empty?
+          report_success('Import Files') if report_outcome
+          logger&.debug 'Files check OK'
+          return true
+        end
+
+        report_errors(missing_files) if report_outcome
+        logger&.debug 'Files check failed!'
+        false
+      end
+      # rubocop : enable Metrics/MethodLength, Metrics/AbcSize, Metrics/CyclomaticComplexity, Lint/RedundantCopDisableDirective
+
+      private
+
+      def region_name(file_name)
+        region = file_name[0..1]
+        # noinspection RubyControlFlowConversionInspection
+        case region
+        when 'de'
+          'German'
+        when 'cn'
+          'China'
+        else
+          'USA'
+        end
+      end
+
+      # noinspection RubyControlFlowConversionInspection
+      def statement_type(file_name)
+        if file_name.include?('balance-')
+          'Balance Sheet'
+        elsif file_name.include?('cashflow-')
+          'Cash Flow Statement'
+        elsif file_name.include?('income-')
+          'Income Statement'
+        else
+          'Unknown Document'
+        end
+      end
+
+      def company_type(file_name)
+        if file_name.include?('bank-')
+          'Bank'
+        elsif file_name.include?('insurance-')
+          'Insurance'
+        else
+          ''
+        end
+      end
+
+      def time_frame(file_name)
+        if file_name.include?('-annual')
+          'Annual'
+        elsif file_name.include?('-quarterly')
+          'Quarterly'
+        elsif file_name.include?('-ttm')
+          'TTM'
+        else
+          'Unknown Time Frame'
+        end
+      end
+
+      # rubocop : disable Metrics/MethodLength, Metrics/AbcSize
+      def report_errors(missing_files)
+        pastel = Pastel.new
+        blue = pastel.blue.bold.detach
+        yellow = pastel.yellow.bold.detach
+
+        puts pastel.red.bold("\nThe following file(s) are missing from the downloads folder:\n")
+
+        header = [blue.call('  File Name  '), blue.call('  Statement Type  '), blue.call('  Region  '),
+                  blue.call('  Company Type  '), blue.call('  Time Frame  ')]
+        table = TTY::Table.new(header: header)
+
+        missing_files.sort!
+        missing_files.each do |file|
+          table << [yellow.call("  #{file}  "), yellow.call("  #{statement_type(file)}  "),
+                    yellow.call("  #{region_name(file)}  "), yellow.call("  #{company_type(file)}  "),
+                    yellow.call("  #{time_frame(file)}  ")]
+        end
+
+        puts table.render(:ascii, indent: 2)
+      end
+      # rubocop : enable Metrics/MethodLength, Metrics/AbcSize
     end
   end
 

@@ -20,7 +20,7 @@ simfin:
     - ttm
   companies:
     - standard
-    - bank
+    - banks
     - insurance
   others:
     - markets

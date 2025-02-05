@@ -23,16 +23,13 @@ namespace :verify_tasks do
       VerifyTaskHelpers::Logging.call(LOGGER)
     when :database
       VerifyTaskHelpers::Database.call(LOGGER)
+    when :files
+      VerifyTaskHelpers::Files.call(LOGGER)
     else
-      result = VerifyTaskHelpers::SimFin.call(LOGGER)
-      result = result and VerifyTaskHelpers::Logging.call(LOGGER) # rubocop : disable Lint/SelfAssignment
-      result = result and VerifyTaskHelpers::Database.call(LOGGER) # rubocop : disable Lint/SelfAssignment
-
-      if result
-        puts 'All good'
-      else
-        puts 'All bad'
-      end
+      VerifyTaskHelpers::SimFin.call(LOGGER)
+      VerifyTaskHelpers::Logging.call(LOGGER)
+      VerifyTaskHelpers::Database.call(LOGGER)
+      VerifyTaskHelpers::Files.call(LOGGER)
     end
   end
 end
