@@ -120,8 +120,13 @@ task :import, [:root_task] do |_, args|
   args.with_defaults(root_task: true)
   root_task = args[:root_task]
 
-  console_logger = TTY::Logger.new
-  console_logger.warn 'The samples task has not been implemented yet.'
+  unless VerifyTaskHelpers::Files.call(LOGGER, report_outcome: false)
+    console_logger = TTY::Logger.new
+    console_logger.error 'Some or all of the SimFin data files are missing.  Use the verify command to list missing files.' # rubocop : disable Layout/LineLength
+    abort
+  end
+
+  Rake::Task['import_tasks:all'].invoke
 
   LOGGER.info('-------------------- Import Command Ended -----------------------')
 
