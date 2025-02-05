@@ -65,14 +65,20 @@
     <option name="myRootTask">
       <RakeTaskImpl id="rake">
         <subtasks>
-          <RakeTaskImpl description="Makes a backup copy of the SimFin files located in the downloads folder" fullCommand="archive" id="archive" />
-          <RakeTaskImpl description="Backups the database" fullCommand="backup" id="backup" />
-          <RakeTaskImpl description="Builds the database from the imported zip files" fullCommand="build" id="build" />
-          <RakeTaskImpl description="Deletes the files in the temp and downloads folders" fullCommand="clear" id="clear" />
+          <RakeTaskImpl description="Makes a backup copy of the SimFin files located in the downloads folder" fullCommand="archive[root_task]" id="archive[root_task]" />
+          <RakeTaskImpl description="Backups the database" fullCommand="backup[root_task]" id="backup[root_task]" />
+          <RakeTaskImpl description="Builds the database from the imported zip files" fullCommand="build[root_task]" id="build[root_task]" />
+          <RakeTaskImpl description="Deletes the files in the temp and downloads folders" fullCommand="clean[root_task]" id="clean[root_task]" />
           <RakeTaskImpl description="Builds the database from the current zip files" fullCommand="default" id="default" />
-          <RakeTaskImpl description="Imports the zip into the database" fullCommand="import" id="import" />
-          <RakeTaskImpl description="Copies the SimFin sample files to the downloads folder" fullCommand="samples" id="samples" />
-          <RakeTaskImpl description="Confirms the environment is ready for operations" fullCommand="verify[section]" id="verify[section]" />
+          <RakeTaskImpl description="Imports the zip into the database" fullCommand="import[root_task]" id="import[root_task]" />
+          <RakeTaskImpl description="Copies the SimFin sample files to the downloads folder" fullCommand="samples[root_task]" id="samples[root_task]" />
+          <RakeTaskImpl description="Confirms the environment is ready for operations" fullCommand="verify[section,root_task]" id="verify[section,root_task]" />
+          <RakeTaskImpl description="" fullCommand="archive" id="archive" />
+          <RakeTaskImpl description="" fullCommand="backup" id="backup" />
+          <RakeTaskImpl description="" fullCommand="build" id="build" />
+          <RakeTaskImpl description="" fullCommand="clean" id="clean" />
+          <RakeTaskImpl description="" fullCommand="import" id="import" />
+          <RakeTaskImpl description="" fullCommand="samples" id="samples" />
           <RakeTaskImpl description="" fullCommand="verify" id="verify" />
           <RakeTaskImpl id="verify_tasks">
             <subtasks>

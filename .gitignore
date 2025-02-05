@@ -115,3 +115,4 @@ build-iPhoneSimulator/
 /data/logs/simfin.log.age
 sample-files/.DS_Store
 .DS_Store
+/data/logs/simfin.20250205.log

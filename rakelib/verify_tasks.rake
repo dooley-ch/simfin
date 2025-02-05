@@ -10,23 +10,28 @@
 # ╚═════════════════════════════════════════════════════════════════════════════════════════════════
 # frozen_string_literal: true
 
-require 'tty-logger'
 require_relative '../lib/verify_task_helpers'
 
 namespace :verify_tasks do
   task :all, [:section] do |_, args| # rubocop : disable Rake/Desc
     verify_type = args[:section].to_sym
 
-    if (console_logger = TTY::Logger.new)
-      case verify_type
-      when :simfin
-        console_logger.info 'Verifying simfin config'
-      when :logging
-        console_logger.info 'Verifying logging config'
-      when :database
-        console_logger.info 'Verifying database'
+    case verify_type
+    when :simfin
+      VerifyTaskHelpers::SimFin.call(LOGGER)
+    when :logging
+      VerifyTaskHelpers::Logging.call(LOGGER)
+    when :database
+      VerifyTaskHelpers::Database.call(LOGGER)
+    else
+      result = VerifyTaskHelpers::SimFin.call(LOGGER)
+      result = result and VerifyTaskHelpers::Logging.call(LOGGER) # rubocop : disable Lint/SelfAssignment
+      result = result and VerifyTaskHelpers::Database.call(LOGGER) # rubocop : disable Lint/SelfAssignment
+
+      if result
+        puts 'All good'
       else
-        console_logger.info 'Verifying all'
+        puts 'All bad'
       end
     end
   end
