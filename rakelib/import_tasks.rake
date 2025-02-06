@@ -15,7 +15,7 @@ require 'tty-spinner'
 
 # rubocop : disable Metrics/BlockLength
 namespace :import_tasks do
-  task all: %i[unzip_files import_other_files import_company_files]
+  task all: %i[unzip_files import_other_files import_company_files import_share_price_files]
 
   task :unzip_files do # rubocop : disable Rake/Desc
     spinner = TTY::Spinner.new('[:spinner] Unzipping files ...', format: :shark)
@@ -91,6 +91,30 @@ namespace :import_tasks do
       query = %{
         COPY staging.#{table_name} (ticker, sim_fin_id, company_name, industry_id, isin,
             end_of_financial_year_month, number_employees, business_summary, market, cik, main_currency)
+        FROM '#{temp_folder}/#{file}' DELIMITER ';' HEADER csv;
+      }
+
+      DatabaseHelpers.import_table(table_name, query, db_info, LOGGER)
+      LOGGER.info("#{table_name} file imported")
+
+      spinner.stop('Done')
+    end
+  end
+
+  task :import_share_price_files do # rubocop : disable Rake/Desc
+    spinner = TTY::Spinner.new('[:spinner] Importing share price files ...', format: :shark)
+    spinner.auto_spin
+
+    file_names = SimFinNameBuilder.share_prices(:csv, LOGGER)
+    temp_folder = Config::Folders.temp
+    db_info = Config::Database.call(LOGGER)
+
+    file_names.each do |key, file|
+      table_name = "share_prices_#{key}"
+
+      query = %{
+        COPY staging.#{table_name} (ticker, sim_fin_id, price_date, open_price, high_price, low_price, close_price,
+                                      adj_close_price, volume, dividend, shares_outstanding)
         FROM '#{temp_folder}/#{file}' DELIMITER ';' HEADER csv;
       }
 

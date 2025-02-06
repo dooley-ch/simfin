@@ -42,5 +42,15 @@ class SimFinNameBuilderTest < Minitest::Test
     assert names.key? :de
     assert names.key? :cn
   end
+
+  def test_should_return_share_price_files
+    names = SimFinNameBuilder.share_prices
+
+    assert_instance_of Hash, names
+    refute_empty names
+    assert names.key? :us
+    assert names.key? :de
+    assert names.key? :cn
+  end
 end
 # rubocop : enable Minitest/MultipleAssertions
