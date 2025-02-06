@@ -31,6 +31,6 @@ logging:
   level: debug # Valid values: unknown, fatal, error, warn, info, debug
 
 database:
-  database: sat_company_data_dev
-  user: sat_dev_user
-  password: dev*123
+  database: simfin
+  user: simfin_dev_user
+  password: dev#123

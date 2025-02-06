@@ -1,36 +1,31 @@
 # ╔═════════════════════════════════════════════════════════════════════════════════════════════════
-# ║     sim_fin_name_builder_test.rb
+# ║     database_helpers.rb
 # ╠═════════════════════════════════════════════════════════════════════════════════════════════════
-# ║     Created: 03.02.2025
+# ║     Created: 06.02.2025
 # ║
 # ║     Copyright (c) 2025 James Dooley <james@dooley.ch>
 # ║
 # ║     History:
-# ║     03.02.2025: Initial version
+# ║     06.02.2025: Initial version
 # ╚═════════════════════════════════════════════════════════════════════════════════════════════════
 # frozen_string_literal: true
 
-require 'test_helper'
-require_relative '../lib/sim_fin_name_builder'
+require 'pg'
 
-# rubocop : disable Minitest/MultipleAssertions
-class SimFinNameBuilderTest < Minitest::Test
-  def test_should_return_all_file_names
-    names = SimFinNameBuilder.all
+module DatabaseHelpers
+  class << self
+    def import_table(table_name, sql, conn_info, logger = nil)
+      begin # rubocop : disable Style/RedundantBegin
+        conn = PG.connect dbname: conn_info.database, user: conn_info.user, password: conn_info.password
 
-    assert_instance_of Array, names
-    refute_empty names
-    assert_includes names, 'markets.zip'
-    assert_includes names, 'industries.zip'
-  end
-
-  def test_should_return_other_files
-    names = SimFinNameBuilder.others
-
-    assert_instance_of Hash, names
-    refute_empty names
-    assert names.key? :markets
-    assert names.key? :industries
+        conn.exec "truncate table staging.#{table_name} restart identity;"
+        conn.exec sql
+      rescue PG::Error => e
+        logger&.error "Failed to import data to table #{table_name} - #{e.message}"
+        raise
+      ensure
+        conn&.close
+      end
+    end
   end
 end
-# rubocop : enable Minitest/MultipleAssertions

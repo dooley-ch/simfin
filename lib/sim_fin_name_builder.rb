@@ -15,6 +15,17 @@ require_relative 'config'
 module SimFinNameBuilder
   # noinspection RubyClassVariableUsageInspection
   class << self
+    def others(extension = :zip, logger = nil)
+      load_config logger
+      values = {}
+
+      @@simfin_info.others.each do |file|
+        values[file.to_sym] = "#{file}.#{extension}"
+      end
+
+      values
+    end
+
     # rubocop : disable Metrics/MethodLength, Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity, Metrics/AbcSize
     def all(extension = :zip, logger = nil)
       load_config logger

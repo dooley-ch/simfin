@@ -1,36 +1,36 @@
 # ╔═════════════════════════════════════════════════════════════════════════════════════════════════
-# ║     sim_fin_name_builder_test.rb
+# ║     database_helpers_test.rb
 # ╠═════════════════════════════════════════════════════════════════════════════════════════════════
-# ║     Created: 03.02.2025
+# ║     Created: 06.02.2025
 # ║
 # ║     Copyright (c) 2025 James Dooley <james@dooley.ch>
 # ║
 # ║     History:
-# ║     03.02.2025: Initial version
+# ║     06.02.2025: Initial version
 # ╚═════════════════════════════════════════════════════════════════════════════════════════════════
 # frozen_string_literal: true
 
 require 'test_helper'
+require_relative '../lib/config'
+require_relative '../lib/database_helpers'
 require_relative '../lib/sim_fin_name_builder'
 
-# rubocop : disable Minitest/MultipleAssertions
-class SimFinNameBuilderTest < Minitest::Test
-  def test_should_return_all_file_names
-    names = SimFinNameBuilder.all
+class DatabaseHelpersTest < Minitest::Test
+  include TestHelpers
 
-    assert_instance_of Array, names
-    refute_empty names
-    assert_includes names, 'markets.zip'
-    assert_includes names, 'industries.zip'
-  end
+  def test_import_file # rubocop : disable Metrics/MethodLength
+    db_conn_info = Config::Database.call
+    temp_folder = Config::Folders.temp
+    other_file_names = SimFinNameBuilder.others(:csv)
+    markets_file = other_file_names[:markets]
 
-  def test_should_return_other_files
-    names = SimFinNameBuilder.others
+    query = %{
+      COPY staging.markets (market_id, market_name, currency)  FROM '#{temp_folder}/#{markets_file}'
+      DELIMITER ';' HEADER csv;
+    }
 
-    assert_instance_of Hash, names
-    refute_empty names
-    assert names.key? :markets
-    assert names.key? :industries
+    assert_silent do
+      DatabaseHelpers.import_table('markets', query, db_conn_info)
+    end
   end
 end
-# rubocop : enable Minitest/MultipleAssertions

@@ -13,8 +13,9 @@
 require 'zip'
 require 'tty-spinner'
 
+# rubocop : disable Metrics/BlockLength
 namespace :import_tasks do
-  task all: %i[unzip_files import_files]
+  task all: %i[unzip_files import_other_files]
 
   task :unzip_files do # rubocop : disable Rake/Desc
     spinner = TTY::Spinner.new('[:spinner] Unzipping files ...', format: :shark)
@@ -43,7 +44,32 @@ namespace :import_tasks do
     spinner.stop('Done')
   end
 
-  task :import_files do # rubocop : disable Rake/Desc
-    puts 'import files'
+  task :import_other_files do # rubocop : disable Rake/Desc
+    file_names = SimFinNameBuilder.others(:csv, LOGGER)
+    temp_folder = Config::Folders.temp
+    db_info = Config::Database.call(LOGGER)
+
+    # Import markets table
+    file = file_names[:markets]
+
+    query = %{
+      COPY staging.markets (market_id, market_name, currency)  FROM '#{temp_folder}/#{file}'
+      DELIMITER ';' HEADER csv;
+    }
+
+    DatabaseHelpers.import_table('markets', query, db_info, LOGGER)
+    LOGGER.info('Markets file imported')
+
+    # Import industries table
+    file = file_names[:industries]
+
+    query = %{
+      COPY staging.industries (industry_id, industry, sector)  FROM '#{temp_folder}/#{file}'
+      DELIMITER ';' HEADER csv;
+    }
+
+    DatabaseHelpers.import_table('industries', query, db_info, LOGGER)
+    LOGGER.info('Industries file imported')
   end
 end
+# rubocop : enable Metrics/BlockLength

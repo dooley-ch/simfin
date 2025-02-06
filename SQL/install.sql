@@ -3546,11 +3546,11 @@ INSERT INTO public.company_type(type_name) VALUES ('Unknown');
 
 -- region User Accounts/Security
 
-revoke connect on database simfin from public;
-revoke all on schema public from public;
-revoke all on schema staging from public;
-revoke all on all tables in schema public from public;
-revoke all on all tables in schema staging from public;
+-- revoke connect on database simfin from public;
+-- revoke all on schema public from public;
+-- revoke all on schema staging from public;
+-- revoke all on all tables in schema public from public;
+-- revoke all on all tables in schema staging from public;
 
 create user simfin_owner nologin;
 
@@ -3575,13 +3575,19 @@ grant all on all sequences in schema public to simfin_dev_group;
 grant execute on all functions in schema public to simfin_dev_group;
 grant execute on all procedures in schema public to simfin_dev_group;
 grant execute on all routines in schema public to simfin_dev_group;
+grant usage on schema staging to simfin_dev_group;
+grant all on all tables in schema staging to simfin_dev_group;
+grant all on all sequences in schema staging to simfin_dev_group;
+grant execute on all functions in schema staging to simfin_dev_group;
+grant execute on all procedures in schema staging to simfin_dev_group;
+grant execute on all routines in schema staging to simfin_dev_group;
 grant simfin_owner to simfin_dev_group; -- Needed to alter sequences etc. on imp tables
 grant pg_read_server_files to simfin_dev_group;
 
 create group simfin_admin_group with createdb;
 grant connect on database simfin to simfin_admin_group;
 grant create on database simfin to simfin_admin_group;
-GRANT sat_dev_group TO simfin_dev_group;
+grant simfin_dev_group TO simfin_admin_group;
 
 create group simfin_users_group;
 grant connect on database simfin to simfin_users_group;
@@ -3599,7 +3605,7 @@ $grant_truncate$
                 execute 'grant truncate on staging.' || quote_ident(current_record.tablename) || ' to simfin_dev_group';
             end loop;
     end;
-$grant_truncate$
+$grant_truncate$;
 
 create user simfin_dev_user with password 'dev#123';
 grant simfin_dev_group to simfin_dev_user;

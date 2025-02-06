@@ -24,7 +24,7 @@ module Config
     class << self
       def call(logger = nil)
         values = ConfigFile.load_hash('simfin', logger)
-        logger&.debug 'Database information loaded...'
+        logger&.debug 'SimFin information loaded...'
         SimFinInfo.new(values['regions'], values['time-frames'], values['companies'], values['others'])
       end
     end
