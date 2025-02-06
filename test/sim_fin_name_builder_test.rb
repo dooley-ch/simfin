@@ -32,5 +32,15 @@ class SimFinNameBuilderTest < Minitest::Test
     assert names.key? :markets
     assert names.key? :industries
   end
+
+  def test_should_return_company_files
+    names = SimFinNameBuilder.companies
+
+    assert_instance_of Hash, names
+    refute_empty names
+    assert names.key? :us
+    assert names.key? :de
+    assert names.key? :cn
+  end
 end
 # rubocop : enable Minitest/MultipleAssertions

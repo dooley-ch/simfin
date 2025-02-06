@@ -26,6 +26,17 @@ module SimFinNameBuilder
       values
     end
 
+    def companies(extension = :zip, logger = nil)
+      load_config logger
+      values = {}
+
+      @@simfin_info.regions.each do |region|
+        values[region.to_sym] = "#{region}-companies.#{extension}"
+      end
+
+      values
+    end
+
     # rubocop : disable Metrics/MethodLength, Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity, Metrics/AbcSize
     def all(extension = :zip, logger = nil)
       load_config logger
