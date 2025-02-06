@@ -3516,25 +3516,98 @@ $body$ language plpgsql;
 
 -- endregion Logging Code
 
--- region Importing Code
+-- region Seed Data
 
-create or replace procedure staging.sp_import_table(in table_name varchar, in import_query varchar)
-AS $body$
-declare
-    reset_query varchar;
-    rows_inserted integer;
-begin
-    reset_query := 'truncate table staging.' || table_name || ' restart identity;';
-    execute reset_query;
+INSERT INTO staging.log_message_type(message_name) VALUES ('Info');
+INSERT INTO staging.log_message_type(message_name) VALUES ('Warn');
+INSERT INTO staging.log_message_type(message_name) VALUES ('Error');
+INSERT INTO staging.log_message_type(message_name) VALUES ('Debug');
 
-    execute import_query;
-    get diagnostics rows_inserted = row_count;
+INSERT INTO public.currency(currency_name, currency_key) VALUES ('United States Dollar','USD');
+INSERT INTO public.currency(currency_name, currency_key) VALUES ('Euro','EUR');
+INSERT INTO public.currency(currency_name, currency_key) VALUES ('Canadian Dollar','CAD');
+INSERT INTO public.currency(currency_name, currency_key) VALUES ('Chinese Yuan','CNY');
 
-    call staging.sp_log_info('Rows imported into table : ' || table_name || ': ' || rows_inserted::varchar);
-exception when others then
-    call staging.sp_log_error('sp_import_table(' || table_name || ') failed with with error message: ' || sqlstate::VARCHAR || ' - ' || sqlerrm);
-    raise;
-end;
-$body$ language plpgsql;
+INSERT INTO public.country(country_name, country_key) VALUES ('United States','USA');
+INSERT INTO public.country(country_name, country_key) VALUES ('Germany','DEU');
+INSERT INTO public.country(country_name, country_key) VALUES ('Canada','CAN');
+INSERT INTO public.country(country_name, country_key) VALUES ('China','CHN');
 
--- endregion Importing Code
+INSERT INTO public.accounting_period(name) VALUES ('Annual');
+INSERT INTO public.accounting_period(name) VALUES ('Quarterly');
+INSERT INTO public.accounting_period(name) VALUES ('TTM');
+
+INSERT INTO public.company_type(type_name) VALUES ('General');
+INSERT INTO public.company_type(type_name) VALUES ('Bank');
+INSERT INTO public.company_type(type_name) VALUES ('Insurance');
+INSERT INTO public.company_type(type_name) VALUES ('Unknown');
+
+-- endregion
+
+-- region User Accounts/Security
+
+revoke connect on database simfin from public;
+revoke all on schema public from public;
+revoke all on schema staging from public;
+revoke all on all tables in schema public from public;
+revoke all on all tables in schema staging from public;
+
+create user simfin_owner nologin;
+
+do
+$change_owner$
+    declare
+        current_record record;
+    begin
+        for current_record in select tablename from pg_catalog.pg_tables
+            where schemaname = 'staging'
+            loop
+                execute 'alter table staging.' || quote_ident(current_record.tablename) || ' owner to simfin_owner';
+            end loop;
+    end;
+$change_owner$;
+
+create group simfin_dev_group;
+grant connect on database simfin to simfin_dev_group;
+grant usage on schema public to simfin_dev_group;
+grant all on all tables in schema public to simfin_dev_group;
+grant all on all sequences in schema public to simfin_dev_group;
+grant execute on all functions in schema public to simfin_dev_group;
+grant execute on all procedures in schema public to simfin_dev_group;
+grant execute on all routines in schema public to simfin_dev_group;
+grant simfin_owner to simfin_dev_group; -- Needed to alter sequences etc. on imp tables
+grant pg_read_server_files to simfin_dev_group;
+
+create group simfin_admin_group with createdb;
+grant connect on database simfin to simfin_admin_group;
+grant create on database simfin to simfin_admin_group;
+GRANT sat_dev_group TO simfin_dev_group;
+
+create group simfin_users_group;
+grant connect on database simfin to simfin_users_group;
+grant usage on schema public to simfin_users_group;
+grant select on all tables in schema public TO simfin_users_group;
+
+do
+$grant_truncate$
+    declare
+        current_record record;
+    begin
+        for current_record in select tablename from pg_catalog.pg_tables
+                              where schemaname = 'staging'
+            loop
+                execute 'grant truncate on staging.' || quote_ident(current_record.tablename) || ' to simfin_dev_group';
+            end loop;
+    end;
+$grant_truncate$
+
+create user simfin_dev_user with password 'dev#123';
+grant simfin_dev_group to simfin_dev_user;
+
+create user simfin_admin_user with password 'admin#123';
+grant simfin_admin_group to simfin_admin_user;
+
+create user simfin_user with password 'user#123';
+grant simfin_users_group to simfin_user;
+
+-- endregion User Accounts/Security

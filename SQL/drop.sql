@@ -32,3 +32,30 @@ drop table if exists public.industry cascade;
 drop table if exists public.sector cascade;
 drop table if exists public.accounting_period cascade;
 drop table if exists public.country cascade;
+
+do
+$drop_owned_objects$
+begin
+    if exists(select * from pg_roles where rolname='simfin_dev_group') then
+        drop owned by simfin_dev_group;
+    end if;
+
+    if exists(select * from pg_roles where rolname='simfin_admin_group') then
+        drop owned by simfin_admin_group;
+    end if;
+
+    if exists(select * from pg_roles where rolname='simfin_users_group') then
+        drop owned by simfin_users_group;
+    end if;
+end
+$drop_owned_objects$;
+
+drop user if exists simfin_dev_user;
+drop user if exists simfin_admin_user;
+drop user if exists simfin_user;
+
+drop group if exists simfin_dev_group;
+drop group if exists simfin_admin_group;
+drop group if exists simfin_users_group;
+
+drop user if exists simfin_owner;
