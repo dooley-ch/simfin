@@ -90,7 +90,13 @@
           <RakeTaskImpl id="import_tasks">
             <subtasks>
               <RakeTaskImpl description="" fullCommand="import_tasks:all" id="all" />
-              <RakeTaskImpl description="" fullCommand="import_tasks:import_files" id="import_files" />
+              <RakeTaskImpl description="" fullCommand="import_tasks:import_bank_income_files" id="import_bank_income_files" />
+              <RakeTaskImpl description="" fullCommand="import_tasks:import_company_files" id="import_company_files" />
+              <RakeTaskImpl description="" fullCommand="import_tasks:import_income_statements" id="import_income_statements" />
+              <RakeTaskImpl description="" fullCommand="import_tasks:import_insurance_income_files" id="import_insurance_income_files" />
+              <RakeTaskImpl description="" fullCommand="import_tasks:import_other_files" id="import_other_files" />
+              <RakeTaskImpl description="" fullCommand="import_tasks:import_share_price_files" id="import_share_price_files" />
+              <RakeTaskImpl description="" fullCommand="import_tasks:import_standard_income_files" id="import_standard_income_files" />
               <RakeTaskImpl description="" fullCommand="import_tasks:unzip_files" id="unzip_files" />
             </subtasks>
           </RakeTaskImpl>

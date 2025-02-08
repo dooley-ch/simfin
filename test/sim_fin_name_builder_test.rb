@@ -52,5 +52,25 @@ class SimFinNameBuilderTest < Minitest::Test
     assert names.key? :de
     assert names.key? :cn
   end
+
+  def test_should_return_region_names
+    names = SimFinNameBuilder.regions
+
+    assert_instance_of Array, names
+    refute_empty names
+    assert_includes names, 'us'
+    assert_includes names, 'de'
+    assert_includes names, 'cn'
+  end
+
+  def test_should_return_time_frames
+    names = SimFinNameBuilder.time_frames
+
+    assert_instance_of Array, names
+    refute_empty names
+    assert_includes names, 'annual'
+    assert_includes names, 'quarterly'
+    assert_includes names, 'ttm'
+  end
 end
 # rubocop : enable Minitest/MultipleAssertions

@@ -19,9 +19,9 @@ class ConfigDatabaseTest < Minitest::Test
     info = Config::Database.call
 
     refute_nil info, 'Information not loaded'
-    assert_equal 'sat_company_data_dev', info.database, 'Incorrect database name returned'
-    assert_equal 'sat_dev_user', info.user, 'Incorrect user name returned'
-    assert_equal 'dev*123', info.password, 'Incorrect password returned'
+    assert_equal 'simfin', info.database, 'Incorrect database name returned'
+    assert_equal 'simfin_dev_user', info.user, 'Incorrect user name returned'
+    assert_equal 'dev#123', info.password, 'Incorrect password returned'
   end
   # rubocop : enable Minitest/MultipleAssertions
 end

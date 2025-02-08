@@ -15,6 +15,26 @@ require_relative 'config'
 module SimFinNameBuilder
   # noinspection RubyClassVariableUsageInspection
   class << self
+    def regions(logger = nil)
+      load_config logger
+
+      names = []
+
+      names.push(*@@simfin_info.regions.map { |region| region })
+
+      names
+    end
+
+    def time_frames(logger = nil)
+      load_config logger
+
+      names = []
+
+      names.push(*@@simfin_info.time_frames.map { |time| time })
+
+      names
+    end
+
     def others(extension = :zip, logger = nil)
       load_config logger
       values = {}
