@@ -23,6 +23,18 @@ Style/Documentation:
   Description: Disable for now
   Enabled: false
 
+Metrics/MethodLength:
+  Description: Default is too restrictive
+  Max: 20
+
+Metrics/BlockLength:
+  Description: Default is too restrictive
+  Max: 30
+
 Minitest/MultipleAssertions:
   Description: More assertions needed to validate data structures
   Max: 5
+
+Rake/Desc:
+  Description: Only top level tasks should have a description and apper in the tasks list
+  Enabled: false

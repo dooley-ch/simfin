@@ -13,7 +13,7 @@
 require_relative '../lib/verify_task_helpers'
 
 namespace :verify_tasks do
-  task :all, [:section] do |_, args| # rubocop : disable Rake/Desc
+  task :all, [:section] do |_, args|
     verify_type = args[:section].to_sym
 
     case verify_type

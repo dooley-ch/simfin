@@ -115,7 +115,7 @@ module VerifyTaskHelpers
         end
       end
 
-      # rubocop : disable Metrics/MethodLength, Metrics/AbcSize
+      # rubocop : disable Metrics/AbcSize
       def report_errors(missing_files)
         pastel = Pastel.new
         blue = pastel.blue.bold.detach
@@ -136,7 +136,7 @@ module VerifyTaskHelpers
 
         puts table.render(:ascii, indent: 2)
       end
-      # rubocop : enable Metrics/MethodLength, Metrics/AbcSize
+      # rubocop : enable Metrics/AbcSize
     end
   end
 
@@ -213,7 +213,6 @@ module VerifyTaskHelpers
     class << self
       include ReportHelpers
 
-      # rubocop : disable Metrics/MethodLength
       def call(logger = nil)
         logger&.debug 'Logging check executed'
 
@@ -240,7 +239,6 @@ module VerifyTaskHelpers
         logger&.debug 'Logging check failed!'
         false
       end
-      # rubocop : enable Metrics/MethodLength
     end
   end
 
@@ -248,7 +246,6 @@ module VerifyTaskHelpers
     class << self
       include ReportHelpers
 
-      # rubocop : disable Metrics/MethodLength
       def call(logger = nil)
         logger&.debug 'Database check executed'
 
@@ -276,7 +273,6 @@ module VerifyTaskHelpers
         logger&.debug 'Database check failed!'
         false
       end
-      # rubocop : enable Metrics/MethodLength
     end
   end
 end

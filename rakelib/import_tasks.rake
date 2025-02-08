@@ -13,12 +13,11 @@
 require 'zip'
 require 'tty-spinner'
 
-# rubocop : disable Metrics/BlockLength
-namespace :import_tasks do
+namespace :import_tasks do # rubocop : disable Metrics/BlockLength
   task all: %i[unzip_files import_other_files import_company_files import_share_price_files import_income_statements
                import_cashflow_statements import_balance_sheets]
 
-  task :unzip_files do # rubocop : disable Rake/Desc
+  task :unzip_files do
     spinner = TTY::Spinner.new('[:spinner] Unzipping files ...', format: :shark)
     spinner.auto_spin
 
@@ -45,7 +44,7 @@ namespace :import_tasks do
     spinner.stop('Done')
   end
 
-  task :import_other_files do # rubocop : disable Rake/Desc
+  task :import_other_files do
     spinner = TTY::Spinner.new('[:spinner] Importing markets and industries files ...', format: :shark)
     spinner.auto_spin
 
@@ -78,7 +77,7 @@ namespace :import_tasks do
     spinner.stop('Done')
   end
 
-  task :import_company_files do # rubocop : disable Rake/Desc
+  task :import_company_files do
     spinner = TTY::Spinner.new('[:spinner] Importing company files ...', format: :shark)
     spinner.auto_spin
 
@@ -102,7 +101,7 @@ namespace :import_tasks do
     end
   end
 
-  task :import_share_price_files do # rubocop : disable Rake/Desc
+  task :import_share_price_files do
     spinner = TTY::Spinner.new('[:spinner] Importing share price files ...', format: :shark)
     spinner.auto_spin
 
@@ -128,7 +127,7 @@ namespace :import_tasks do
 
   task import_income_statements: %i[import_general_income_files import_bank_income_files import_insurance_income_files]
 
-  task :import_general_income_files do # rubocop : disable Rake/Desc
+  task :import_general_income_files do
     spinner = TTY::Spinner.new('[:spinner] Importing general income files ...', format: :shark)
     spinner.auto_spin
 
@@ -163,7 +162,7 @@ namespace :import_tasks do
     spinner.stop('Done')
   end
 
-  task :import_bank_income_files do # rubocop : disable Rake/Desc
+  task :import_bank_income_files do
     spinner = TTY::Spinner.new('[:spinner] Importing bank income files ...', format: :shark)
     spinner.auto_spin
 
@@ -177,17 +176,16 @@ namespace :import_tasks do
         table_name = "income_statement_#{region}_bank_#{time_frame}"
         file_name = "#{region}-income-banks-#{time_frame}.csv"
 
-        # rubocop : disable Layout/LineLength
         query = %{
-            COPY staging.#{table_name} (ticker, sim_fin_id, currency, fiscal_year, fiscal_period, report_date, publish_date,
-                                      restated_date, shares_basic, shares_diluted, revenue, provision_for_loan_losses,
-                                      net_revenue_after_provisions, total_non_interest_expense, operating_income_loss,
+            COPY staging.#{table_name} (ticker, sim_fin_id, currency, fiscal_year, fiscal_period,
+                                      report_date, publish_date, restated_date, shares_basic, shares_diluted, revenue,
+                                      provision_for_loan_losses, net_revenue_after_provisions,
+                                      total_non_interest_expense, operating_income_loss,
                                       non_operating_income_loss, pretax_income_loss, income_tax_expense_benefit_net,
-                                      income_loss_from_continuing_operations, net_extraordinary_gains_losses, net_income,
-                                      net_income_common)
+                                      income_loss_from_continuing_operations, net_extraordinary_gains_losses,
+                                      net_income, net_income_common)
             FROM '#{temp_folder}/#{file_name}' DELIMITER ';' HEADER csv;
           }
-        # rubocop : enable Layout/LineLength
 
         DatabaseHelpers.import_table(table_name, query, db_info, LOGGER)
         LOGGER.info("Income #{table_name} file imported")
@@ -197,7 +195,7 @@ namespace :import_tasks do
     spinner.stop('Done')
   end
 
-  task :import_insurance_income_files do # rubocop : disable Rake/Desc
+  task :import_insurance_income_files do
     spinner = TTY::Spinner.new('[:spinner] Importing insurance income files ...', format: :shark)
     spinner.auto_spin
 
@@ -211,17 +209,16 @@ namespace :import_tasks do
         table_name = "income_statement_#{region}_insurance_#{time_frame}"
         file_name = "#{region}-income-insurance-#{time_frame}.csv"
 
-        # rubocop : disable Layout/LineLength
         query = %{
-          COPY staging.#{table_name} (ticker, sim_fin_id, currency, fiscal_year, fiscal_period, report_date, publish_date,
-                                      restated_date, shares_basic, shares_diluted, revenue, total_claims_losses,
-                                      operating_income_loss, pretax_income_loss, income_tax_expense_benefit_net,
-                                      income_loss_from_affiliates_net_of_taxes, income_loss_from_continuing_operations,
-                                      net_extraordinary_gains_losses, net_income, net_income_common)
+          COPY staging.#{table_name} (ticker, sim_fin_id, currency, fiscal_year, fiscal_period, report_date,
+                                      publish_date, restated_date, shares_basic, shares_diluted, revenue,
+                                      total_claims_losses, operating_income_loss, pretax_income_loss,
+                                      income_tax_expense_benefit_net, income_loss_from_affiliates_net_of_taxes,
+                                      income_loss_from_continuing_operations, net_extraordinary_gains_losses,
+                                      net_income, net_income_common)
           FROM '#{temp_folder}/#{file_name}' DELIMITER ';' HEADER csv;
         }
-        # rubocop : enable Layout/LineLength
-        #
+
         DatabaseHelpers.import_table(table_name, query, db_info, LOGGER)
         LOGGER.info("Income #{table_name} file imported")
       end
@@ -233,7 +230,7 @@ namespace :import_tasks do
   task import_cashflow_statements: %i[import_general_cashflow_files import_bank_cashflow_files
                                       import_insurance_cashflow_files]
 
-  task :import_general_cashflow_files do # rubocop : disable Rake/Desc
+  task :import_general_cashflow_files do
     spinner = TTY::Spinner.new('[:spinner] Importing general cashflow files ...', format: :shark)
     spinner.auto_spin
 
@@ -247,20 +244,18 @@ namespace :import_tasks do
         table_name = "cash_flow_#{region}_general_#{time_frame}"
         file_name = "#{region}-cashflow-#{time_frame}.csv"
 
-        # rubocop : disable Layout/LineLength
-
         query = %{
-          COPY staging.#{table_name} (ticker, sim_fin_id, currency, fiscal_year, fiscal_period, report_date, publish_date,
-                                      restated_date, shares_basic, shares_diluted, net_income_starting_line,
-                                      depreciation_amortization, non_cash_items, change_in_working_capital,
-                                      change_in_accounts_receivable, change_in_inventories, change_in_accounts_payable,
-                                      change_in_other, net_cash_from_operating_activities, change_in_fixed_assets_intangibles,
-                                      net_change_in_long_term_investment, net_cash_from_acquisitions_divestitures,
-                                      net_cash_from_investing_activities, dividends_paid, cash_from_repayment_of_debt,
-                                      cash_from_repurchase_of_equity, net_cash_from_financing_activities, net_change_in_cash)
+          COPY staging.#{table_name} (ticker, sim_fin_id, currency, fiscal_year, fiscal_period, report_date,
+                                      publish_date, restated_date, shares_basic, shares_diluted,
+                                      net_income_starting_line, depreciation_amortization, non_cash_items,
+                                      change_in_working_capital, change_in_accounts_receivable, change_in_inventories,
+                                      change_in_accounts_payable, change_in_other, net_cash_from_operating_activities,
+                                      change_in_fixed_assets_intangibles, net_change_in_long_term_investment,
+                                      net_cash_from_acquisitions_divestitures, net_cash_from_investing_activities,
+                                      dividends_paid, cash_from_repayment_of_debt, cash_from_repurchase_of_equity,
+                                      net_cash_from_financing_activities, net_change_in_cash)
           FROM '#{temp_folder}/#{file_name}' DELIMITER ';' HEADER csv;
         }
-        # rubocop : enable Layout/LineLength
 
         DatabaseHelpers.import_table(table_name, query, db_info, LOGGER)
         LOGGER.info("Cashflow #{table_name} file imported")
@@ -270,7 +265,7 @@ namespace :import_tasks do
     spinner.stop('Done')
   end
 
-  task :import_bank_cashflow_files do # rubocop : disable Rake/Desc
+  task :import_bank_cashflow_files do
     spinner = TTY::Spinner.new('[:spinner] Importing bank cashflow files ...', format: :shark)
     spinner.auto_spin
 
@@ -305,7 +300,7 @@ namespace :import_tasks do
     spinner.stop('Done')
   end
 
-  task :import_insurance_cashflow_files do # rubocop : disable Rake/Desc
+  task :import_insurance_cashflow_files do
     spinner = TTY::Spinner.new('[:spinner] Importing insurance cashflow files ...', format: :shark)
     spinner.auto_spin
 
@@ -321,9 +316,11 @@ namespace :import_tasks do
 
         query = %{
           COPY staging.#{table_name} (ticker, sim_fin_id, currency, fiscal_year, fiscal_period, report_date,
-                                      publish_date, restated_date, shares_basic, shares_diluted, net_income_starting_line,
+                                      publish_date, restated_date, shares_basic, shares_diluted,
+                                      net_income_starting_line,
                                       depreciation_amortization, non_cash_items, net_cash_from_operating_activities,
-                                      change_in_fixed_assets_intangibles, net_change_in_investments, net_cash_from_investing_activities,
+                                      change_in_fixed_assets_intangibles, net_change_in_investments,
+                                      net_cash_from_investing_activities,
                                       dividends_paid, cash_from_repayment_of_debt, cash_from_repurchase_of_equity,
                                       net_cash_from_financing_activities, effect_of_foreign_exchange_rate,
                                       net_change_in_cash)
@@ -341,7 +338,7 @@ namespace :import_tasks do
   task import_balance_sheets: %i[import_general_balance_sheet_files import_bank_balance_sheet_files
                                  import_insurance_balance_sheet_files]
 
-  task :import_general_balance_sheet_files do # rubocop : disable Rake/Desc
+  task :import_general_balance_sheet_files do
     spinner = TTY::Spinner.new('[:spinner] Importing general balance sheet files ...', format: :shark)
     spinner.auto_spin
 
@@ -355,18 +352,18 @@ namespace :import_tasks do
         table_name = "balance_sheet_#{region}_general_#{time_frame}"
         file_name = "#{region}-balance-#{time_frame}.csv"
 
-        # rubocop : disable Layout/LineLength
         query = %{
-          COPY staging.#{table_name} (ticker, sim_fin_id, currency, fiscal_year, fiscal_period, report_date, publish_date, restated_date,
-                                      shares_basic, shares_diluted, cash_cash_equivalents_short_term_investments, accounts_notes_receivable,
-                                      inventories, total_current_assets, property_plant_equipment, long_term_investments_receivables,
-                                      other_long_term_assets, total_noncurrent_assets, total_assets, payables_accruals, short_term_debt,
-                                      total_current_liabilities, long_term_debt, total_noncurrent_liabilities, total_liabilities,
-                                      share_capital_additional_paid_in_capital, treasury_stock, retained_earnings, total_equity,
-                                      total_liabilities_equity)
+          COPY staging.#{table_name} (ticker, sim_fin_id, currency, fiscal_year, fiscal_period, report_date,
+                                      publish_date, restated_date, shares_basic, shares_diluted,
+                                      cash_cash_equivalents_short_term_investments, accounts_notes_receivable,
+                                      inventories, total_current_assets, property_plant_equipment,
+                                      long_term_investments_receivables, other_long_term_assets,
+                                      total_noncurrent_assets, total_assets, payables_accruals, short_term_debt,
+                                      total_current_liabilities, long_term_debt, total_noncurrent_liabilities,
+                                      total_liabilities, share_capital_additional_paid_in_capital, treasury_stock,
+                                      retained_earnings, total_equity, total_liabilities_equity)
           FROM '#{temp_folder}/#{file_name}' DELIMITER ';' HEADER csv;
         }
-        # rubocop : enable Layout/LineLength
 
         DatabaseHelpers.import_table(table_name, query, db_info, LOGGER)
         LOGGER.info("Balance sheet #{table_name} file imported")
@@ -376,7 +373,7 @@ namespace :import_tasks do
     spinner.stop('Done')
   end
 
-  task :import_bank_balance_sheet_files do # rubocop : disable Rake/Desc
+  task :import_bank_balance_sheet_files do
     spinner = TTY::Spinner.new('[:spinner] Importing bank balance sheet files ...', format: :shark)
     spinner.auto_spin
 
@@ -390,17 +387,16 @@ namespace :import_tasks do
         table_name = "balance_sheet_#{region}_bank_#{time_frame}"
         file_name = "#{region}-balance-banks-#{time_frame}.csv"
 
-        # rubocop : disable Layout/LineLength
         query = %{
-          COPY staging.#{table_name} (ticker, sim_fin_id, currency, fiscal_year, fiscal_period, report_date, publish_date, restated_date,
-                                      shares_basic, shares_diluted, cash_cash_equivalents_short_term_investments, interbank_assets,
-                                      short_long_term_investments, accounts_notes_receivable, net_loans, net_fixed_assets, total_assets,
-                                      total_deposits, short_term_debt, long_term_debt, total_liabilities, preferred_equity,
-                                      share_capital_additional_paid_in_capital, treasury_stock, retained_earnings, total_equity,
-                                      total_liabilities_equity)
+          COPY staging.#{table_name} (ticker, sim_fin_id, currency, fiscal_year, fiscal_period, report_date,
+                                      publish_date, restated_date, shares_basic, shares_diluted,
+                                      cash_cash_equivalents_short_term_investments, interbank_assets,
+                                      short_long_term_investments, accounts_notes_receivable, net_loans,
+                                      net_fixed_assets, total_assets, total_deposits, short_term_debt, long_term_debt,
+                                      total_liabilities, preferred_equity, share_capital_additional_paid_in_capital,
+                                      treasury_stock, retained_earnings, total_equity, total_liabilities_equity)
           FROM '#{temp_folder}/#{file_name}' DELIMITER ';' HEADER csv;
         }
-        # rubocop : enable Layout/LineLength
 
         DatabaseHelpers.import_table(table_name, query, db_info, LOGGER)
         LOGGER.info("Balance sheet #{table_name} file imported")
@@ -410,7 +406,7 @@ namespace :import_tasks do
     spinner.stop('Done')
   end
 
-  task :import_insurance_balance_sheet_files do # rubocop : disable Rake/Desc
+  task :import_insurance_balance_sheet_files do
     spinner = TTY::Spinner.new('[:spinner] Importing insurance balance sheet files ...', format: :shark)
     spinner.auto_spin
 
@@ -424,16 +420,17 @@ namespace :import_tasks do
         table_name = "balance_sheet_#{region}_insurance_#{time_frame}"
         file_name = "#{region}-balance-insurance-#{time_frame}.csv"
 
-        # rubocop : disable Layout/LineLength
         query = %{
-          COPY staging.#{table_name} (ticker, sim_fin_id, currency, fiscal_year, fiscal_period, report_date, publish_date, restated_date, shares_basic,
-                                      shares_diluted, total_investments, cash_cash_equivalents_short_term_investments, accounts_notes_receivable,
-                                      property_plant_equipment_net, total_assets, insurance_reserves, short_term_debt, long_term_debt,
-                                      total_liabilities, preferred_equity, policyholders_equity, share_capital_additional_paid_in_capital,
+          COPY staging.#{table_name} (ticker, sim_fin_id, currency, fiscal_year, fiscal_period, report_date,
+                                      publish_date, restated_date, shares_basic,
+                                      shares_diluted, total_investments, cash_cash_equivalents_short_term_investments,
+                                      accounts_notes_receivable,
+                                      property_plant_equipment_net, total_assets, insurance_reserves, short_term_debt,
+                                      long_term_debt, total_liabilities, preferred_equity, policyholders_equity,
+                                      share_capital_additional_paid_in_capital,
                                       treasury_stock, retained_earnings, total_equity, total_liabilities_equity)
           FROM '#{temp_folder}/#{file_name}' DELIMITER ';' HEADER csv;
         }
-        # rubocop : enable Layout/LineLength
 
         DatabaseHelpers.import_table(table_name, query, db_info, LOGGER)
         LOGGER.info("Balance sheet #{table_name} file imported")
@@ -443,5 +440,3 @@ namespace :import_tasks do
     spinner.stop('Done')
   end
 end
-
-# rubocop : enable Metrics/BlockLength

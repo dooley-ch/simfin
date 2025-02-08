@@ -52,21 +52,8 @@ module Config
 
   module ConfigFile
     class << self
-      # rubocop : disable Metrics/MethodLength
       def load_hash(hash_name, logger = nil)
-        config_file = Files.config_file.to_s
-        unless File.exist?(config_file)
-          logger&.error "Config file #{config_file} not found"
-          raise Errors::FileNotFoundError, config_file
-        end
-
-        begin
-          contents = YAML.load_file config_file
-        rescue Psych::SyntaxError => e
-          error_message = "YAML syntax error in config file': #{e.message}"
-          logger&.error error_message
-          raise Errors::ConfigurationError, error_message
-        end
+        contents = load_file_contents logger
 
         if contents.key?(hash_name)
           logger&.debug "Config hash: #{hash_name} loaded successfully"
@@ -77,7 +64,24 @@ module Config
         logger&.error error_message
         raise Errors::ConfigurationError, error_message
       end
-      # rubocop : enable Metrics/MethodLength
+
+      private
+
+      def load_file_contents(logger = nil)
+        config_file = Files.config_file.to_s
+        unless File.exist?(config_file)
+          logger&.error "Config file #{config_file} not found"
+          raise Errors::FileNotFoundError, config_file
+        end
+
+        begin
+          YAML.load_file config_file
+        rescue Psych::SyntaxError => e
+          error_message = "YAML syntax error in config file': #{e.message}"
+          logger&.error error_message
+          raise Errors::ConfigurationError, error_message
+        end
+      end
     end
   end
 
