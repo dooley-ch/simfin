@@ -22,3 +22,7 @@ AllCops:
 Style/Documentation:
   Description: Disable for now
   Enabled: false
+
+Minitest/MultipleAssertions:
+  Description: More assertions needed to validate data structures
+  Max: 5

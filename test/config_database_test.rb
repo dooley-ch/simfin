@@ -14,14 +14,24 @@ require 'test_helper'
 require_relative '../lib/config'
 
 class ConfigDatabaseTest < Minitest::Test
-  # rubocop : disable Minitest/MultipleAssertions
-  def test_should_return_database_info
+  def test_should_return_database_name
     info = Config::Database.call
 
     refute_nil info, 'Information not loaded'
     assert_equal 'simfin', info.database, 'Incorrect database name returned'
+  end
+
+  def test_should_return_user_name
+    info = Config::Database.call
+
+    refute_nil info, 'Information not loaded'
     assert_equal 'simfin_dev_user', info.user, 'Incorrect user name returned'
+  end
+
+  def test_should_return_user_password
+    info = Config::Database.call
+
+    refute_nil info, 'Information not loaded'
     assert_equal 'dev#123', info.password, 'Incorrect password returned'
   end
-  # rubocop : enable Minitest/MultipleAssertions
 end

@@ -13,7 +13,6 @@
 require 'test_helper'
 require_relative '../lib/sim_fin_name_builder'
 
-# rubocop : disable Minitest/MultipleAssertions
 class SimFinNameBuilderTest < Minitest::Test
   def test_should_return_all_file_names
     names = SimFinNameBuilder.all
@@ -73,4 +72,3 @@ class SimFinNameBuilderTest < Minitest::Test
     assert_includes names, 'ttm'
   end
 end
-# rubocop : enable Minitest/MultipleAssertions
