@@ -71,3 +71,6 @@ sample-files/.DS_Store
 .DS_Store
 /data/downloads/*.zip
 /data/temp/*.csv
+/bin/yard
+/bin/yardoc
+/bin/yri
