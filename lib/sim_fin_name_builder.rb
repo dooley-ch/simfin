@@ -12,9 +12,14 @@
 
 require_relative 'config'
 
+# This module dynamically builds the SimFin file names according to their naming convention
 module SimFinNameBuilder
   # noinspection RubyClassVariableUsageInspection
   class << self
+    # Returns the region names as defined in the config file in the SimFin section
+    #
+    # @param [logger, nil] logger - An instance of the application logger
+    # @return [Array]
     def regions(logger = nil)
       load_config logger
 
@@ -25,6 +30,10 @@ module SimFinNameBuilder
       names
     end
 
+    # Returns a list of time frames as defined in the config file in the SimFin section
+    #
+    # @param [logger, nil] logger - An instance of the application logger
+    # @return [Array]
     def time_frames(logger = nil)
       load_config logger
 
@@ -35,6 +44,11 @@ module SimFinNameBuilder
       names
     end
 
+    # Returns the names of the other master files used by SimFin - markets, sectors and industries
+    #
+    # @param [Symbol] extension - The file extension to assign to the generated file names
+    # @param [logger, nil] logger - An instance of the application logger
+    # @return [Hash]
     def others(extension = :zip, logger = nil)
       load_config logger
       values = {}
@@ -46,6 +60,11 @@ module SimFinNameBuilder
       values
     end
 
+    # This method returns a list of the SimFin company file names
+    #
+    # @param [Symbol] extension - The file extension to assign to the generated file names
+    # @param [logger, nil] logger - An instance of the application logger
+    # @return [Hash]
     def companies(extension = :zip, logger = nil)
       load_config logger
       values = {}
@@ -57,6 +76,11 @@ module SimFinNameBuilder
       values
     end
 
+    # This method returns a list of the SimFin share price file names
+    #
+    # @param [Symbol] extension - The file extension to assign to the generated file names
+    # @param [logger, nil] logger - An instance of the application logger
+    # @return [Hash]
     def share_prices(extension = :zip, logger = nil)
       load_config logger
       values = {}
@@ -68,6 +92,11 @@ module SimFinNameBuilder
       values
     end
 
+    # This method returns a list of all the SimFin file names
+    #
+    # @param [Symbol] extension - The file extension to assign to the generated file names
+    # @param [logger, nil] logger - An instance of the application logger
+    # @return [Array]
     # rubocop : disable Metrics/MethodLength, Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity, Metrics/AbcSize
     def all(extension = :zip, logger = nil)
       load_config logger

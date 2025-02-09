@@ -19,10 +19,6 @@ AllCops:
   Exclude:
     - bin/*
 
-Style/Documentation:
-  Description: Disable for now
-  Enabled: false
-
 Metrics/MethodLength:
   Description: Default is too restrictive
   Max: 20
@@ -36,5 +32,5 @@ Minitest/MultipleAssertions:
   Max: 5
 
 Rake/Desc:
-  Description: Only top level tasks should have a description and apper in the tasks list
+  Description: Only top level tasks should have a description and application in the tasks list
   Enabled: false

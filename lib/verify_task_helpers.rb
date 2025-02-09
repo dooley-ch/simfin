@@ -15,8 +15,17 @@ require 'tty-table'
 require_relative 'sim_fin_name_builder'
 require_relative 'config'
 
+# This module contains a number of methods used by the verification task to ensure the system is
+# configured correctly and has the data needed to build the SimFin database
 module VerifyTaskHelpers
+  # This module provides helper functions used by other modules in this suite
+  # to report errors to the user
   module ReportHelpers
+    # This method display the error list for a configuration section when verified
+    #
+    # @param [String] section_name - The name of the section containing the errors
+    # @param [Array] errors - The list of errors in the validated section
+    #
     # noinspection RubyResolve
     def report_errors(section_name, errors)
       pastel = Pastel.new
@@ -26,6 +35,10 @@ module VerifyTaskHelpers
       end
     end
 
+    # This method reports the successful validation of a configuration section
+    #
+    # @param [String] section_name
+    #
     # noinspection RubyResolve
     def report_success(section_name)
       pastel = Pastel.new
@@ -33,11 +46,18 @@ module VerifyTaskHelpers
     end
   end
 
+  # This module checks to ensure that all the SimFin data files are available for processing
   module Files
     class << self
       include ReportHelpers
 
-      # rubocop : disable Metrics/MethodLength, Metrics/AbcSize, Metrics/CyclomaticComplexity, Lint/RedundantCopDisableDirective
+      # Executes the validation process to check the existence of the downloaded SimFin data files
+      #
+      # @param [logger, nil] logger - an instance of the application logger
+      # @param [Boolean] - indicates if the outcome should be reported on the screen
+      #
+      # rubocop : disable Metrics/AbcSize, Metrics/CyclomaticComplexity,
+      # Lint/RedundantCopDisableDirective
       # noinspection RubyControlFlowConversionInspection
       def call(logger = nil, report_outcome: true)
         logger&.debug 'SimFin check executed'
@@ -63,10 +83,14 @@ module VerifyTaskHelpers
         logger&.debug 'Files check failed!'
         false
       end
-      # rubocop : enable Metrics/MethodLength, Metrics/AbcSize, Metrics/CyclomaticComplexity, Lint/RedundantCopDisableDirective
+      # rubocop : enable Metrics/AbcSize, Metrics/CyclomaticComplexity
 
       private
 
+      # This method maps a regional key from a file name to it's description
+      #
+      # @param [String] file_name
+      # @return [String]
       def region_name(file_name)
         region = file_name[0..1]
         # noinspection RubyControlFlowConversionInspection
@@ -80,6 +104,10 @@ module VerifyTaskHelpers
         end
       end
 
+      # This method maps a statement key from a file name to it's description
+      #
+      # @param [String] file_name
+      # @return [String]
       # noinspection RubyControlFlowConversionInspection
       def statement_type(file_name)
         if file_name.include?('balance-')
@@ -93,6 +121,10 @@ module VerifyTaskHelpers
         end
       end
 
+      # This method maps a company type key from a file name to it's description
+      #
+      # @param [String] file_name
+      # @return [String]
       def company_type(file_name)
         if file_name.include?('bank-')
           'Bank'
@@ -103,6 +135,10 @@ module VerifyTaskHelpers
         end
       end
 
+      # This method maps a time key from a file name to it's description
+      #
+      # @param [String] file_name
+      # @return [String]
       def time_frame(file_name)
         if file_name.include?('-annual')
           'Annual'
@@ -115,6 +151,10 @@ module VerifyTaskHelpers
         end
       end
 
+      # This method displays the list of missing files to the user
+      #
+      # @param [Array] missing_files - list of missing files
+      #
       # rubocop : disable Metrics/AbcSize
       def report_errors(missing_files)
         pastel = Pastel.new
@@ -140,10 +180,14 @@ module VerifyTaskHelpers
     end
   end
 
+  # This module validates the SimFin information stored in the config file
   module SimFin
     class << self
       include ReportHelpers
 
+      # Executes the validation process to check the SimFin configuration data
+      #
+      # @param [logger, nil] logger - an instance of the application logger
       # rubocop : disable Metrics/AbcSize, Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity, Metrics/MethodLength
       def call(logger = nil)
         logger&.debug 'SimFin check executed'
@@ -209,10 +253,14 @@ module VerifyTaskHelpers
     end
   end
 
+  # This module validates the logging confirmation information stored in the config file
   module Logging
     class << self
       include ReportHelpers
 
+      # Executes the validation process to check the existence of the logging configuration
+      #
+      # @param [logger, nil] logger - an instance of the application logger
       def call(logger = nil)
         logger&.debug 'Logging check executed'
 
@@ -242,10 +290,14 @@ module VerifyTaskHelpers
     end
   end
 
+  # This module is used to validate the database connection information stored in the config file
   module Database
     class << self
       include ReportHelpers
 
+      # Executes the validation process to check the existence of the database configuration
+      #
+      # @param [logger, nil] logger - an instance of the application logger
       def call(logger = nil)
         logger&.debug 'Database check executed'
 

@@ -12,8 +12,15 @@
 
 require 'pg'
 
+# This module handles the application's interaction with the database
 module DatabaseHelpers
   class << self
+    # Connects to the database and executes the SQL needed to import data into the given table.
+    #
+    # @param [string, _ToS] table_name - the name of the database table receiving the data
+    # @param [string, _ToS] sql - the SQL to execute in order to import the data
+    # @param [object] conn_info - the database credentials needed to connect to the database
+    # @param [object, nil] logger - the application logger
     def import_table(table_name, sql, conn_info, logger = nil)
       conn = PG.connect dbname: conn_info.database, user: conn_info.user, password: conn_info.password
 
