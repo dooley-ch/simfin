@@ -143,8 +143,7 @@ task :build, [:root_task] do |_, args|
   args.with_defaults(root_task: true)
   root_task = args[:root_task]
 
-  console_logger = TTY::Logger.new
-  console_logger.warn 'The build task has not been implemented yet.'
+  Rake::Task['build_tasks:all'].invoke
 
   LOGGER.info('-------------------- Build Command Ended ------------------------')
 

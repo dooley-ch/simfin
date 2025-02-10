@@ -3438,6 +3438,21 @@ create table staging.balance_sheet_cn_insurance_ttm
 
 -- endregion Balance Sheet Tables
     
+-- region System Tables
+
+create table staging.simfin_industry_map(
+    id serial not null,
+    simfin_industry_id char(6) not null,
+    industry_id SMALLINT not null,
+    record_version smallint not null default 1,
+    created_on timestamp with time zone not null default current_timestamp,
+    constraint simfin_industry_map_pkey primary key(id)
+);
+
+create unique index simfin_industry_map_industry_id_idx on staging.simfin_industry_map(simfin_industry_id);
+
+-- endregion System Tables
+
 -- endregion Staging Schema - Tables
 
 -- region Logging Code
@@ -3516,104 +3531,210 @@ $body$ language plpgsql;
 
 -- endregion Logging Code
 
+-- region Build Support Functions
+
+create or replace function staging.fn_accounting_period_id(period varchar)
+    returns smallint
+as $function_body$
+declare
+    identifier smallint;
+begin
+    select id into identifier from public.accounting_period where (name = period);
+
+    if not found then
+        raise exception 'No accounting period for key: %!', period;
+    end if;
+
+    return identifier;
+end;
+$function_body$ language plpgsql;
+
+create or replace function staging.fn_company_id(company_ticker varchar)
+    returns smallint
+as $function_body$
+declare
+    identifier smallint;
+begin
+    select id into identifier from public.company where (ticker = company_ticker);
+
+    if not found then
+        raise exception 'No company record for ticker: %!', company_ticker;
+    end if;
+
+    return identifier;
+end;
+$function_body$ language plpgsql;
+
+create or replace function staging.fn_company_type_id(company_type varchar)
+    returns smallint
+as $function_body$
+declare
+    identifier smallint;
+begin
+    select id into identifier from public.company_type where (type_name = company_type);
+
+    if not found then
+        raise exception 'No company type record for type: %!', company_type;
+    end if;
+
+    return identifier;
+end;
+$function_body$ language plpgsql;
+
+create or replace function staging.fn_country_id(key char(3))
+    returns smallint
+as $function_body$
+declare
+    identifier smallint;
+begin
+    select id into identifier from public.country where (country_key = key);
+
+    if not found then
+        raise exception 'No country record for key: %!', key;
+    end if;
+
+    return identifier;
+end;
+$function_body$ language plpgsql;
+
+create or replace function staging.fn_currency_id(key char(3))
+    returns smallint
+as $function_body$
+declare
+    identifier smallint;
+begin
+    select id into identifier from public.currency where (currency_key = key);
+
+    if not found then
+        raise exception 'No currency record for key: %!', key;
+    end if;
+
+    return identifier;
+end;
+$function_body$ language plpgsql;
+
+create or replace function staging.fn_stock_market_id(name varchar)
+    returns smallint
+as $function_body$
+declare
+    identifier smallint;
+begin
+    select id into identifier from public.stock_market where (market_name = name);
+
+    if not found then
+        raise exception 'No market record for name: %!', name;
+    end if;
+
+    return identifier;
+end;
+$function_body$ language plpgsql;
+
+create or replace function staging.fn_sector_id(name varchar)
+    returns smallint
+as $function_body$
+declare
+    identifier smallint;
+begin
+    select id into identifier from public.sector where (sector_name = name);
+
+    if not found then
+        raise exception 'No sector record for name: %!', name;
+    end if;
+
+    return identifier;
+end;
+$function_body$ language plpgsql;
+
+-- endregion Build Support Function
+
+-- region Build Stored Procedures
+
+create or replace procedure staging.sp_reset_public_tables()
+as $procedure_body$
+declare
+    current_record record;
+begin
+    for current_record in select tablename from pg_catalog.pg_tables
+                          where schemaname = 'public' and (tablename <>
+                              all(array['accounting_period', 'country', 'currency']))
+        loop
+            execute 'truncate table public.' || quote_ident(current_record.tablename) || ' restart identity cascade;';
+        end loop;
+end;
+$procedure_body$ language plpgsql;
+
+create or replace procedure staging.sp_build_stock_market_table()
+as $procedure_body$
+begin
+    insert into public.stock_market(market_name, extra_data, currency_id)
+    select market_name, market_id, staging.fn_currency_id(currency) from staging.markets;
+end;
+$procedure_body$ language plpgsql;
+
+create or replace procedure staging.sp_build_sector_table()
+as $procedure_body$
+begin
+    insert into sector(sector_name)
+        select distinct sector from staging.industries;
+
+    insert into sector (sector_name) values ('Unknown');
+end;
+$procedure_body$ language plpgsql;
+
+create or replace procedure staging.sp_build_industry_table()
+as $procedure_body$
+declare
+    sector_id smallint;
+    new_industry_id smallint;
+    current_record record;
+begin
+    for current_record in select industry_id, industry, sector from staging.industries order by sector loop
+        sector_id := staging.fn_sector_id(current_record.sector::varchar);
+
+        insert into public.industry(industry_name, sector_id) values (current_record.industry, sector_id)
+            returning id into new_industry_id;
+        insert into staging.simfin_industry_map(simfin_industry_id, industry_id) values (current_record.industry_id, new_industry_id);
+    end loop;
+
+    sector_id := staging.fn_sector_id('Unknown');
+    insert into public.industry(industry_name, sector_id) values ('Unknown', sector_id)
+        returning id into new_industry_id;
+    insert into staging.simfin_industry_map(simfin_industry_id, industry_id) values ('999999', new_industry_id);
+end;
+$procedure_body$ language plpgsql;
+
+-- endregion Build Stored Procedures
+
 -- region Seed Data
 
-INSERT INTO staging.log_message_type(message_name) VALUES ('Info');
-INSERT INTO staging.log_message_type(message_name) VALUES ('Warn');
-INSERT INTO staging.log_message_type(message_name) VALUES ('Error');
-INSERT INTO staging.log_message_type(message_name) VALUES ('Debug');
+insert into staging.log_message_type(message_name) values ('Info');
+insert into staging.log_message_type(message_name) values ('Warn');
+insert into staging.log_message_type(message_name) values ('Error');
+insert into staging.log_message_type(message_name) values ('Debug');
 
-INSERT INTO public.currency(currency_name, currency_key) VALUES ('United States Dollar','USD');
-INSERT INTO public.currency(currency_name, currency_key) VALUES ('Euro','EUR');
-INSERT INTO public.currency(currency_name, currency_key) VALUES ('Canadian Dollar','CAD');
-INSERT INTO public.currency(currency_name, currency_key) VALUES ('Chinese Yuan','CNY');
+insert into public.currency(currency_name, currency_key) values ('United States Dollar','USD');
+insert into public.currency(currency_name, currency_key) values ('Euro','EUR');
+insert into public.currency(currency_name, currency_key) values ('Canadian Dollar','CAD');
+insert into public.currency(currency_name, currency_key) values ('Chinese Yuan','CNY');
 
-INSERT INTO public.country(country_name, country_key) VALUES ('United States','USA');
-INSERT INTO public.country(country_name, country_key) VALUES ('Germany','DEU');
-INSERT INTO public.country(country_name, country_key) VALUES ('Canada','CAN');
-INSERT INTO public.country(country_name, country_key) VALUES ('China','CHN');
+insert into public.country(country_name, country_key) values ('United States','USA');
+insert into public.country(country_name, country_key) values ('Germany','DEU');
+insert into public.country(country_name, country_key) values ('Canada','CAN');
+insert into public.country(country_name, country_key) values ('China','CHN');
 
-INSERT INTO public.accounting_period(name) VALUES ('Annual');
-INSERT INTO public.accounting_period(name) VALUES ('Quarterly');
-INSERT INTO public.accounting_period(name) VALUES ('TTM');
+insert into public.accounting_period(name) values ('Annual');
+insert into public.accounting_period(name) values ('Quarterly');
+insert into public.accounting_period(name) values ('TTM');
 
-INSERT INTO public.company_type(type_name) VALUES ('General');
-INSERT INTO public.company_type(type_name) VALUES ('Bank');
-INSERT INTO public.company_type(type_name) VALUES ('Insurance');
-INSERT INTO public.company_type(type_name) VALUES ('Unknown');
+insert into public.company_type(type_name) values ('General');
+insert into public.company_type(type_name) values ('Bank');
+insert into public.company_type(type_name) values ('Insurance');
+insert into public.company_type(type_name) values ('Unknown');
 
 -- endregion
 
--- region User Accounts/Security
+-- region User Accounts
 
--- revoke connect on database simfin from public;
--- revoke all on schema public from public;
--- revoke all on schema staging from public;
--- revoke all on all tables in schema public from public;
--- revoke all on all tables in schema staging from public;
+create user simfin_dev_user with login superuser connection limit -1 password 'dev#123';
 
-create user simfin_owner nologin;
-
-do
-$change_owner$
-    declare
-        current_record record;
-    begin
-        for current_record in select tablename from pg_catalog.pg_tables
-            where schemaname = 'staging'
-            loop
-                execute 'alter table staging.' || quote_ident(current_record.tablename) || ' owner to simfin_owner';
-            end loop;
-    end;
-$change_owner$;
-
-create group simfin_dev_group;
-grant connect on database simfin to simfin_dev_group;
-grant usage on schema public to simfin_dev_group;
-grant all on all tables in schema public to simfin_dev_group;
-grant all on all sequences in schema public to simfin_dev_group;
-grant execute on all functions in schema public to simfin_dev_group;
-grant execute on all procedures in schema public to simfin_dev_group;
-grant execute on all routines in schema public to simfin_dev_group;
-grant usage on schema staging to simfin_dev_group;
-grant all on all tables in schema staging to simfin_dev_group;
-grant all on all sequences in schema staging to simfin_dev_group;
-grant execute on all functions in schema staging to simfin_dev_group;
-grant execute on all procedures in schema staging to simfin_dev_group;
-grant execute on all routines in schema staging to simfin_dev_group;
-grant simfin_owner to simfin_dev_group; -- Needed to alter sequences etc. on imp tables
-grant pg_read_server_files to simfin_dev_group;
-
-create group simfin_admin_group with createdb;
-grant connect on database simfin to simfin_admin_group;
-grant create on database simfin to simfin_admin_group;
-grant simfin_dev_group TO simfin_admin_group;
-
-create group simfin_users_group;
-grant connect on database simfin to simfin_users_group;
-grant usage on schema public to simfin_users_group;
-grant select on all tables in schema public TO simfin_users_group;
-
-do
-$grant_truncate$
-    declare
-        current_record record;
-    begin
-        for current_record in select tablename from pg_catalog.pg_tables
-                              where schemaname = 'staging'
-            loop
-                execute 'grant truncate on staging.' || quote_ident(current_record.tablename) || ' to simfin_dev_group';
-            end loop;
-    end;
-$grant_truncate$;
-
-create user simfin_dev_user with password 'dev#123';
-grant simfin_dev_group to simfin_dev_user;
-
-create user simfin_admin_user with password 'admin#123';
-grant simfin_admin_group to simfin_admin_user;
-
-create user simfin_user with password 'user#123';
-grant simfin_users_group to simfin_user;
-
--- endregion User Accounts/Security
+-- endregion User Accounts

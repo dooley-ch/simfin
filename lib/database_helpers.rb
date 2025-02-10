@@ -32,5 +32,22 @@ module DatabaseHelpers
     ensure
       conn&.close
     end
+
+    # Connects to the database and executes the given procedure
+    #
+    # @param [String] procedure_name
+    # @param [object] conn_info - the database credentials needed to connect to the database
+    # @param [object, nil] logger - the application logger
+    def execute_stored_procedure(procedure_name, conn_info, logger = nil)
+      conn = PG.connect dbname: conn_info.database, user: conn_info.user, password: conn_info.password
+      sql = "call staging.#{procedure_name}();"
+
+      conn.exec sql
+    rescue PG::Error => e
+      logger&.error "Failed to execute stored procedure #{procedure_name} - #{e.message}"
+      raise
+    ensure
+      conn&.close
+    end
   end
 end
