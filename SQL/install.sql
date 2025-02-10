@@ -51,27 +51,25 @@ create table accounting_period(
 CREATE UNIQUE INDEX accounting_period_idx ON accounting_period(name);
 
 create table company(
-                        id bigserial not null,
-                        company_number char(8) not null,
-                        ticker varchar(20) not null,
-                        company_name varchar(120) not null,
-                        isin char(12),
-                        cik char(20),
-                        end_of_year_month char(2),
-                        employees bigserial,
-                        business text,
-                        active bool not null default true,
-                        company_type_id smallint not null,
-                        industry_id smallint not null,
-                        currency_id smallint not null,
-                        stock_market_id smallint not null,
-                        country_id smallint not null,
-                        record_version smallint not null default 1,
-                        created_on timestamp with time zone not null default current_timestamp,
-                        updated_on timestamp with time zone not null default current_timestamp,
-                        constraint company_pkey primary key(id),
-                        constraint company_company_number_ukey UNIQUE(company_number),
-                        constraint company_ticker_ukey UNIQUE(ticker)
+    id bigserial not null,
+    ticker varchar(20) not null,
+    company_name varchar(120) not null,
+    isin char(12),
+    cik char(20),
+    end_of_year_month char(2),
+    employees bigserial,
+    business text,
+    active bool not null default true,
+    company_type_id smallint not null,
+    industry_id smallint not null,
+    currency_id smallint not null,
+    stock_market_id smallint not null,
+    country_id smallint not null,
+    record_version smallint not null default 1,
+    created_on timestamp with time zone not null default current_timestamp,
+    updated_on timestamp with time zone not null default current_timestamp,
+    constraint company_pkey primary key(id),
+    constraint company_ticker_ukey UNIQUE(ticker)
 );
 
 create table company_type(
@@ -3565,16 +3563,16 @@ begin
 end;
 $function_body$ language plpgsql;
 
-create or replace function staging.fn_company_type_id(company_type varchar)
+create or replace function staging.fn_company_type_id(required_type varchar)
     returns smallint
 as $function_body$
 declare
     identifier smallint;
 begin
-    select id into identifier from public.company_type where (type_name = company_type);
+    select id into identifier from public.company_type where (type_name = required_type);
 
     if not found then
-        raise exception 'No company type record for type: %!', company_type;
+        raise exception 'No company type record for type: %!', required_type;
     end if;
 
     return identifier;
@@ -3619,7 +3617,7 @@ as $function_body$
 declare
     identifier smallint;
 begin
-    select id into identifier from public.stock_market where (market_name = name);
+    select id into identifier from public.stock_market where (extra_data = name);
 
     if not found then
         raise exception 'No market record for name: %!', name;
@@ -3645,6 +3643,22 @@ begin
 end;
 $function_body$ language plpgsql;
 
+create or replace function staging.fn_industry_id(industry_number varchar)
+    returns smallint
+as $function_body$
+declare
+    identifier smallint;
+begin
+    select industry_id into identifier from staging.simfin_industry_map where (simfin_industry_id = industry_number);
+
+    if not found then
+        raise exception 'No industry record for simfin industry id : %!', industry_number;
+    end if;
+
+    return identifier;
+end;
+$function_body$ language plpgsql;
+
 -- endregion Build Support Function
 
 -- region Build Stored Procedures
@@ -3656,7 +3670,7 @@ declare
 begin
     for current_record in select tablename from pg_catalog.pg_tables
                           where schemaname = 'public' and (tablename <>
-                              all(array['accounting_period', 'country', 'currency']))
+                              all(array['accounting_period', 'country', 'currency', 'company_type']))
         loop
             execute 'truncate table public.' || quote_ident(current_record.tablename) || ' restart identity cascade;';
         end loop;
@@ -3700,6 +3714,77 @@ begin
     insert into public.industry(industry_name, sector_id) values ('Unknown', sector_id)
         returning id into new_industry_id;
     insert into staging.simfin_industry_map(simfin_industry_id, industry_id) values ('999999', new_industry_id);
+end;
+$procedure_body$ language plpgsql;
+
+create or replace procedure staging.sp_build_company_table()
+as $procedure_body$
+declare
+    current_record record;
+begin
+    -- US companies
+    update staging.company_us set business_summary = '<Currently Unavailable>' where business_summary is null;
+    update staging.company_us set number_employees = '0' where number_employees is null;
+    update staging.company_us set industry_id = '999999' where industry_id is null;
+
+    for current_record in select ticker, company_name, industry_id, isin, end_of_financial_year_month, number_employees,
+                                 business_summary, market, cik, main_currency FROM staging.company_us
+                          where (ticker is not null) and (ticker not like '%_delisted') order by id loop
+
+        insert into company(ticker, company_name, isin, cik, end_of_year_month, employees,
+                            business, company_type_id, industry_id, currency_id, stock_market_id, country_id)
+        values ( current_record.ticker, current_record.company_name, current_record.isin, current_record.cik,
+                current_record.end_of_financial_year_month, 0,
+                current_record.business_summary,
+                staging.fn_company_type_id('Unknown'),
+                staging.fn_industry_id(current_record.industry_id::varchar),
+                staging.fn_currency_id(current_record.main_currency),
+                staging.fn_stock_market_id(current_record.market),
+                staging.fn_country_id('USA'));
+    end loop;
+
+    -- German companies
+    update staging.company_de set business_summary = '<Currently Unavailable>' where business_summary is null;
+    update staging.company_de set number_employees = '0' where number_employees is null;
+    update staging.company_de set industry_id = '999999' where industry_id is null;
+
+    for current_record in select ticker, company_name, industry_id, isin, end_of_financial_year_month, number_employees,
+                                 business_summary, market, cik, main_currency FROM staging.company_de
+                          where (ticker is not null) and (ticker not like '%_delisted') order by id loop
+
+        insert into company(ticker, company_name, isin, cik, end_of_year_month, employees,
+                            business, company_type_id, industry_id, currency_id, stock_market_id, country_id)
+        values ( current_record.ticker, current_record.company_name, current_record.isin, current_record.cik,
+                 current_record.end_of_financial_year_month, 0,
+                 current_record.business_summary,
+                 staging.fn_company_type_id('Unknown'),
+                 staging.fn_industry_id(current_record.industry_id::varchar),
+                 staging.fn_currency_id(current_record.main_currency),
+                 staging.fn_stock_market_id(current_record.market),
+                 staging.fn_country_id('DEU'));
+    end loop;
+
+    -- Chinese companies
+    update staging.company_cn set business_summary = '<Currently Unavailable>' where business_summary is null;
+    update staging.company_cn set number_employees = '0' where number_employees is null;
+    update staging.company_cn set industry_id = '999999' where industry_id is null;
+
+    for current_record in select ticker, company_name, industry_id, isin, end_of_financial_year_month, number_employees,
+                                 business_summary, market, cik, main_currency FROM staging.company_cn
+                          where (ticker is not null) and (ticker not like '%_delisted') order by id loop
+
+        insert into company(ticker, company_name, isin, cik, end_of_year_month, employees,
+                            business, company_type_id, industry_id, currency_id, stock_market_id, country_id)
+        values ( current_record.ticker, current_record.company_name, current_record.isin, current_record.cik,
+                 current_record.end_of_financial_year_month, 0,
+                 current_record.business_summary,
+                 staging.fn_company_type_id('Unknown'),
+                 staging.fn_industry_id(current_record.industry_id::varchar),
+                 staging.fn_currency_id(current_record.main_currency),
+                 staging.fn_stock_market_id(current_record.market),
+                 staging.fn_country_id('CHN'));
+    end loop;
+
 end;
 $procedure_body$ language plpgsql;
 
