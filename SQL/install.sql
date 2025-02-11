@@ -3548,10 +3548,10 @@ end;
 $function_body$ language plpgsql;
 
 create or replace function staging.fn_company_id(company_ticker varchar)
-    returns smallint
+    returns bigint
 as $function_body$
 declare
-    identifier smallint;
+    identifier bigint;
 begin
     select id into identifier from public.company where (ticker = company_ticker);
 
@@ -3784,9 +3784,904 @@ begin
                  staging.fn_stock_market_id(current_record.market),
                  staging.fn_country_id('CHN'));
     end loop;
-
 end;
 $procedure_body$ language plpgsql;
+
+create or replace procedure staging.sp_build_income_statement__general_table()
+as
+$procedurebody$
+begin
+    truncate table public.income_statement_general restart identity;
+
+    -- region USA
+    
+    insert into public.income_statement_general (company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date,
+                                          restated_date, shares_basic, shares_diluted, revenue, cost_of_revenue, gross_profit, operating_expenses,
+                                          selling_general_administrative, research_development, depreciation_amortization, operating_income,
+                                          non_operating_income, interest_expense_net, pretax_income_loss_adj, abnormal_gains, pretax_income,
+                                          income_tax_benefit_net, income_from_continuing_operations, net_extraordinary_gains, net_income,
+                                          net_income_common)
+    select staging.fn_company_id(ticker::varchar) AS company_id,
+           staging.fn_currency_id(currency) AS currency_id,
+           staging.fn_accounting_period_id('Annual') as accounting_period_id,
+           fiscal_year::integer,
+           fiscal_period,
+           to_date(report_date, 'YYYY-MM-DD') as report_date,
+           to_date(publish_date, 'YYYY-MM-DD') as publish_date,
+           to_date(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic::bigint,
+           shares_diluted::bigint,
+           round(cast(coalesce(revenue, '0') as numeric), 2) as revenue,
+           round(cast(coalesce(cost_of_revenue, '0') as numeric), 2) as cost_of_revenue,
+           round(cast(coalesce(gross_profit, '0') as numeric), 2) as gross_profit,
+           round(cast(coalesce(operating_expenses, '0') as numeric), 2) as operating_expenses,
+           round(cast(coalesce(selling_general_administrative, '0') as numeric), 2) as selling_general_administrative,
+           round(cast(coalesce(research_development, '0') as numeric), 2) as research_development,
+           round(cast(coalesce(depreciation_amortization, '0') as numeric), 2) as depreciation_amortization,
+           round(cast(coalesce(operating_income_loss, '0') as numeric), 2) as operating_income_loss,
+           round(cast(coalesce(non_operating_income_loss, '0') as numeric), 2) as non_operating_income_loss,
+           round(cast(coalesce(interest_expense_net, '0') as numeric), 2) as interest_expense_net,
+           round(cast(coalesce(pretax_income_loss_adj, '0') as numeric), 2) as pretax_income_loss_adj,
+           round(cast(coalesce(abnormal_gains_losses, '0') as numeric), 2) as abnormal_gains_losses,
+           round(cast(coalesce(pretax_income_loss, '0') as numeric), 2) as pretax_income_loss,
+           round(cast(coalesce(income_tax_expense_benefit_net, '0') as numeric), 2) as income_tax_expense_benefit_net,
+           round(cast(coalesce(income_loss_from_continuing_operations, '0') as numeric), 2) as income_loss_from_continuing_operations,
+           round(cast(coalesce(net_extraordinary_gains_losses, '0') as numeric), 2) as net_extraordinary_gains_losses,
+           round(cast(coalesce(net_income, '0') as numeric), 2) as net_income,
+           round(cast(coalesce(net_income_common, '0') as numeric), 2) as net_income_common
+    from staging.income_statement_us_general_annual
+    where ticker in (select ticker from public.company);
+
+    insert into public.income_statement_general (company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date,
+                                                 restated_date, shares_basic, shares_diluted, revenue, cost_of_revenue, gross_profit, operating_expenses,
+                                                 selling_general_administrative, research_development, depreciation_amortization, operating_income,
+                                                 non_operating_income, interest_expense_net, pretax_income_loss_adj, abnormal_gains, pretax_income,
+                                                 income_tax_benefit_net, income_from_continuing_operations, net_extraordinary_gains, net_income,
+                                                 net_income_common)
+    select staging.fn_company_id(ticker::varchar) AS company_id,
+           staging.fn_currency_id(currency) AS currency_id,
+           staging.fn_accounting_period_id('Quarterly') as accounting_period_id,
+           fiscal_year::integer,
+           fiscal_period,
+           to_date(report_date, 'YYYY-MM-DD') as report_date,
+           to_date(publish_date, 'YYYY-MM-DD') as publish_date,
+           to_date(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic::bigint,
+           shares_diluted::bigint,
+           round(cast(coalesce(revenue, '0') as numeric), 2) as revenue,
+           round(cast(coalesce(cost_of_revenue, '0') as numeric), 2) as cost_of_revenue,
+           round(cast(coalesce(gross_profit, '0') as numeric), 2) as gross_profit,
+           round(cast(coalesce(operating_expenses, '0') as numeric), 2) as operating_expenses,
+           round(cast(coalesce(selling_general_administrative, '0') as numeric), 2) as selling_general_administrative,
+           round(cast(coalesce(research_development, '0') as numeric), 2) as research_development,
+           round(cast(coalesce(depreciation_amortization, '0') as numeric), 2) as depreciation_amortization,
+           round(cast(coalesce(operating_income_loss, '0') as numeric), 2) as operating_income_loss,
+           round(cast(coalesce(non_operating_income_loss, '0') as numeric), 2) as non_operating_income_loss,
+           round(cast(coalesce(interest_expense_net, '0') as numeric), 2) as interest_expense_net,
+           round(cast(coalesce(pretax_income_loss_adj, '0') as numeric), 2) as pretax_income_loss_adj,
+           round(cast(coalesce(abnormal_gains_losses, '0') as numeric), 2) as abnormal_gains_losses,
+           round(cast(coalesce(pretax_income_loss, '0') as numeric), 2) as pretax_income_loss,
+           round(cast(coalesce(income_tax_expense_benefit_net, '0') as numeric), 2) as income_tax_expense_benefit_net,
+           round(cast(coalesce(income_loss_from_continuing_operations, '0') as numeric), 2) as income_loss_from_continuing_operations,
+           round(cast(coalesce(net_extraordinary_gains_losses, '0') as numeric), 2) as net_extraordinary_gains_losses,
+           round(cast(coalesce(net_income, '0') as numeric), 2) as net_income,
+           round(cast(coalesce(net_income_common, '0') as numeric), 2) as net_income_common
+    from staging.income_statement_us_general_quarterly
+    where ticker in (select ticker from public.company);
+
+    insert into public.income_statement_general (company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date,
+                                                 restated_date, shares_basic, shares_diluted, revenue, cost_of_revenue, gross_profit, operating_expenses,
+                                                 selling_general_administrative, research_development, depreciation_amortization, operating_income,
+                                                 non_operating_income, interest_expense_net, pretax_income_loss_adj, abnormal_gains, pretax_income,
+                                                 income_tax_benefit_net, income_from_continuing_operations, net_extraordinary_gains, net_income,
+                                                 net_income_common)
+    select staging.fn_company_id(ticker::varchar) AS company_id,
+           staging.fn_currency_id(currency) AS currency_id,
+           staging.fn_accounting_period_id('TTM') as accounting_period_id,
+           fiscal_year::integer,
+           fiscal_period,
+           to_date(report_date, 'YYYY-MM-DD') as report_date,
+           to_date(publish_date, 'YYYY-MM-DD') as publish_date,
+           to_date(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic::bigint,
+           shares_diluted::bigint,
+           round(cast(coalesce(revenue, '0') as numeric), 2) as revenue,
+           round(cast(coalesce(cost_of_revenue, '0') as numeric), 2) as cost_of_revenue,
+           round(cast(coalesce(gross_profit, '0') as numeric), 2) as gross_profit,
+           round(cast(coalesce(operating_expenses, '0') as numeric), 2) as operating_expenses,
+           round(cast(coalesce(selling_general_administrative, '0') as numeric), 2) as selling_general_administrative,
+           round(cast(coalesce(research_development, '0') as numeric), 2) as research_development,
+           round(cast(coalesce(depreciation_amortization, '0') as numeric), 2) as depreciation_amortization,
+           round(cast(coalesce(operating_income_loss, '0') as numeric), 2) as operating_income_loss,
+           round(cast(coalesce(non_operating_income_loss, '0') as numeric), 2) as non_operating_income_loss,
+           round(cast(coalesce(interest_expense_net, '0') as numeric), 2) as interest_expense_net,
+           round(cast(coalesce(pretax_income_loss_adj, '0') as numeric), 2) as pretax_income_loss_adj,
+           round(cast(coalesce(abnormal_gains_losses, '0') as numeric), 2) as abnormal_gains_losses,
+           round(cast(coalesce(pretax_income_loss, '0') as numeric), 2) as pretax_income_loss,
+           round(cast(coalesce(income_tax_expense_benefit_net, '0') as numeric), 2) as income_tax_expense_benefit_net,
+           round(cast(coalesce(income_loss_from_continuing_operations, '0') as numeric), 2) as income_loss_from_continuing_operations,
+           round(cast(coalesce(net_extraordinary_gains_losses, '0') as numeric), 2) as net_extraordinary_gains_losses,
+           round(cast(coalesce(net_income, '0') as numeric), 2) as net_income,
+           round(cast(coalesce(net_income_common, '0') as numeric), 2) as net_income_common
+    from staging.income_statement_us_general_ttm
+    where ticker in (select ticker from public.company);
+
+    -- endregion USA
+
+    -- region Germany
+
+    insert into public.income_statement_general (company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date,
+                                                 restated_date, shares_basic, shares_diluted, revenue, cost_of_revenue, gross_profit, operating_expenses,
+                                                 selling_general_administrative, research_development, depreciation_amortization, operating_income,
+                                                 non_operating_income, interest_expense_net, pretax_income_loss_adj, abnormal_gains, pretax_income,
+                                                 income_tax_benefit_net, income_from_continuing_operations, net_extraordinary_gains, net_income,
+                                                 net_income_common)
+    select staging.fn_company_id(ticker::varchar) AS company_id,
+           staging.fn_currency_id(currency) AS currency_id,
+           staging.fn_accounting_period_id('Annual') as accounting_period_id,
+           fiscal_year::integer,
+           fiscal_period,
+           to_date(report_date, 'YYYY-MM-DD') as report_date,
+           to_date(publish_date, 'YYYY-MM-DD') as publish_date,
+           to_date(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic::bigint,
+           shares_diluted::bigint,
+           round(cast(coalesce(revenue, '0') as numeric), 2) as revenue,
+           round(cast(coalesce(cost_of_revenue, '0') as numeric), 2) as cost_of_revenue,
+           round(cast(coalesce(gross_profit, '0') as numeric), 2) as gross_profit,
+           round(cast(coalesce(operating_expenses, '0') as numeric), 2) as operating_expenses,
+           round(cast(coalesce(selling_general_administrative, '0') as numeric), 2) as selling_general_administrative,
+           round(cast(coalesce(research_development, '0') as numeric), 2) as research_development,
+           round(cast(coalesce(depreciation_amortization, '0') as numeric), 2) as depreciation_amortization,
+           round(cast(coalesce(operating_income_loss, '0') as numeric), 2) as operating_income_loss,
+           round(cast(coalesce(non_operating_income_loss, '0') as numeric), 2) as non_operating_income_loss,
+           round(cast(coalesce(interest_expense_net, '0') as numeric), 2) as interest_expense_net,
+           round(cast(coalesce(pretax_income_loss_adj, '0') as numeric), 2) as pretax_income_loss_adj,
+           round(cast(coalesce(abnormal_gains_losses, '0') as numeric), 2) as abnormal_gains_losses,
+           round(cast(coalesce(pretax_income_loss, '0') as numeric), 2) as pretax_income_loss,
+           round(cast(coalesce(income_tax_expense_benefit_net, '0') as numeric), 2) as income_tax_expense_benefit_net,
+           round(cast(coalesce(income_loss_from_continuing_operations, '0') as numeric), 2) as income_loss_from_continuing_operations,
+           round(cast(coalesce(net_extraordinary_gains_losses, '0') as numeric), 2) as net_extraordinary_gains_losses,
+           round(cast(coalesce(net_income, '0') as numeric), 2) as net_income,
+           round(cast(coalesce(net_income_common, '0') as numeric), 2) as net_income_common
+    from staging.income_statement_de_general_annual
+    where ticker in (select ticker from public.company);
+
+    insert into public.income_statement_general (company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date,
+                                                 restated_date, shares_basic, shares_diluted, revenue, cost_of_revenue, gross_profit, operating_expenses,
+                                                 selling_general_administrative, research_development, depreciation_amortization, operating_income,
+                                                 non_operating_income, interest_expense_net, pretax_income_loss_adj, abnormal_gains, pretax_income,
+                                                 income_tax_benefit_net, income_from_continuing_operations, net_extraordinary_gains, net_income,
+                                                 net_income_common)
+    select staging.fn_company_id(ticker::varchar) AS company_id,
+           staging.fn_currency_id(currency) AS currency_id,
+           staging.fn_accounting_period_id('Quarterly') as accounting_period_id,
+           fiscal_year::integer,
+           fiscal_period,
+           to_date(report_date, 'YYYY-MM-DD') as report_date,
+           to_date(publish_date, 'YYYY-MM-DD') as publish_date,
+           to_date(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic::bigint,
+           shares_diluted::bigint,
+           round(cast(coalesce(revenue, '0') as numeric), 2) as revenue,
+           round(cast(coalesce(cost_of_revenue, '0') as numeric), 2) as cost_of_revenue,
+           round(cast(coalesce(gross_profit, '0') as numeric), 2) as gross_profit,
+           round(cast(coalesce(operating_expenses, '0') as numeric), 2) as operating_expenses,
+           round(cast(coalesce(selling_general_administrative, '0') as numeric), 2) as selling_general_administrative,
+           round(cast(coalesce(research_development, '0') as numeric), 2) as research_development,
+           round(cast(coalesce(depreciation_amortization, '0') as numeric), 2) as depreciation_amortization,
+           round(cast(coalesce(operating_income_loss, '0') as numeric), 2) as operating_income_loss,
+           round(cast(coalesce(non_operating_income_loss, '0') as numeric), 2) as non_operating_income_loss,
+           round(cast(coalesce(interest_expense_net, '0') as numeric), 2) as interest_expense_net,
+           round(cast(coalesce(pretax_income_loss_adj, '0') as numeric), 2) as pretax_income_loss_adj,
+           round(cast(coalesce(abnormal_gains_losses, '0') as numeric), 2) as abnormal_gains_losses,
+           round(cast(coalesce(pretax_income_loss, '0') as numeric), 2) as pretax_income_loss,
+           round(cast(coalesce(income_tax_expense_benefit_net, '0') as numeric), 2) as income_tax_expense_benefit_net,
+           round(cast(coalesce(income_loss_from_continuing_operations, '0') as numeric), 2) as income_loss_from_continuing_operations,
+           round(cast(coalesce(net_extraordinary_gains_losses, '0') as numeric), 2) as net_extraordinary_gains_losses,
+           round(cast(coalesce(net_income, '0') as numeric), 2) as net_income,
+           round(cast(coalesce(net_income_common, '0') as numeric), 2) as net_income_common
+    from staging.income_statement_de_general_quarterly
+    where ticker in (select ticker from public.company);
+
+    insert into public.income_statement_general (company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date,
+                                                 restated_date, shares_basic, shares_diluted, revenue, cost_of_revenue, gross_profit, operating_expenses,
+                                                 selling_general_administrative, research_development, depreciation_amortization, operating_income,
+                                                 non_operating_income, interest_expense_net, pretax_income_loss_adj, abnormal_gains, pretax_income,
+                                                 income_tax_benefit_net, income_from_continuing_operations, net_extraordinary_gains, net_income,
+                                                 net_income_common)
+    select staging.fn_company_id(ticker::varchar) AS company_id,
+           staging.fn_currency_id(currency) AS currency_id,
+           staging.fn_accounting_period_id('TTM') as accounting_period_id,
+           fiscal_year::integer,
+           fiscal_period,
+           to_date(report_date, 'YYYY-MM-DD') as report_date,
+           to_date(publish_date, 'YYYY-MM-DD') as publish_date,
+           to_date(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic::bigint,
+           shares_diluted::bigint,
+           round(cast(coalesce(revenue, '0') as numeric), 2) as revenue,
+           round(cast(coalesce(cost_of_revenue, '0') as numeric), 2) as cost_of_revenue,
+           round(cast(coalesce(gross_profit, '0') as numeric), 2) as gross_profit,
+           round(cast(coalesce(operating_expenses, '0') as numeric), 2) as operating_expenses,
+           round(cast(coalesce(selling_general_administrative, '0') as numeric), 2) as selling_general_administrative,
+           round(cast(coalesce(research_development, '0') as numeric), 2) as research_development,
+           round(cast(coalesce(depreciation_amortization, '0') as numeric), 2) as depreciation_amortization,
+           round(cast(coalesce(operating_income_loss, '0') as numeric), 2) as operating_income_loss,
+           round(cast(coalesce(non_operating_income_loss, '0') as numeric), 2) as non_operating_income_loss,
+           round(cast(coalesce(interest_expense_net, '0') as numeric), 2) as interest_expense_net,
+           round(cast(coalesce(pretax_income_loss_adj, '0') as numeric), 2) as pretax_income_loss_adj,
+           round(cast(coalesce(abnormal_gains_losses, '0') as numeric), 2) as abnormal_gains_losses,
+           round(cast(coalesce(pretax_income_loss, '0') as numeric), 2) as pretax_income_loss,
+           round(cast(coalesce(income_tax_expense_benefit_net, '0') as numeric), 2) as income_tax_expense_benefit_net,
+           round(cast(coalesce(income_loss_from_continuing_operations, '0') as numeric), 2) as income_loss_from_continuing_operations,
+           round(cast(coalesce(net_extraordinary_gains_losses, '0') as numeric), 2) as net_extraordinary_gains_losses,
+           round(cast(coalesce(net_income, '0') as numeric), 2) as net_income,
+           round(cast(coalesce(net_income_common, '0') as numeric), 2) as net_income_common
+    from staging.income_statement_de_general_ttm
+    where ticker in (select ticker from public.company);
+
+    -- endregion Germany
+
+    -- region China
+
+    insert into public.income_statement_general (company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date,
+                                                 restated_date, shares_basic, shares_diluted, revenue, cost_of_revenue, gross_profit, operating_expenses,
+                                                 selling_general_administrative, research_development, depreciation_amortization, operating_income,
+                                                 non_operating_income, interest_expense_net, pretax_income_loss_adj, abnormal_gains, pretax_income,
+                                                 income_tax_benefit_net, income_from_continuing_operations, net_extraordinary_gains, net_income,
+                                                 net_income_common)
+    select staging.fn_company_id(ticker::varchar) AS company_id,
+           staging.fn_currency_id(currency) AS currency_id,
+           staging.fn_accounting_period_id('Annual') as accounting_period_id,
+           fiscal_year::integer,
+           fiscal_period,
+           to_date(report_date, 'YYYY-MM-DD') as report_date,
+           to_date(publish_date, 'YYYY-MM-DD') as publish_date,
+           to_date(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic::bigint,
+           shares_diluted::bigint,
+           round(cast(coalesce(revenue, '0') as numeric), 2) as revenue,
+           round(cast(coalesce(cost_of_revenue, '0') as numeric), 2) as cost_of_revenue,
+           round(cast(coalesce(gross_profit, '0') as numeric), 2) as gross_profit,
+           round(cast(coalesce(operating_expenses, '0') as numeric), 2) as operating_expenses,
+           round(cast(coalesce(selling_general_administrative, '0') as numeric), 2) as selling_general_administrative,
+           round(cast(coalesce(research_development, '0') as numeric), 2) as research_development,
+           round(cast(coalesce(depreciation_amortization, '0') as numeric), 2) as depreciation_amortization,
+           round(cast(coalesce(operating_income_loss, '0') as numeric), 2) as operating_income_loss,
+           round(cast(coalesce(non_operating_income_loss, '0') as numeric), 2) as non_operating_income_loss,
+           round(cast(coalesce(interest_expense_net, '0') as numeric), 2) as interest_expense_net,
+           round(cast(coalesce(pretax_income_loss_adj, '0') as numeric), 2) as pretax_income_loss_adj,
+           round(cast(coalesce(abnormal_gains_losses, '0') as numeric), 2) as abnormal_gains_losses,
+           round(cast(coalesce(pretax_income_loss, '0') as numeric), 2) as pretax_income_loss,
+           round(cast(coalesce(income_tax_expense_benefit_net, '0') as numeric), 2) as income_tax_expense_benefit_net,
+           round(cast(coalesce(income_loss_from_continuing_operations, '0') as numeric), 2) as income_loss_from_continuing_operations,
+           round(cast(coalesce(net_extraordinary_gains_losses, '0') as numeric), 2) as net_extraordinary_gains_losses,
+           round(cast(coalesce(net_income, '0') as numeric), 2) as net_income,
+           round(cast(coalesce(net_income_common, '0') as numeric), 2) as net_income_common
+    from staging.income_statement_cn_general_annual
+    where ticker in (select ticker from public.company);
+
+    insert into public.income_statement_general (company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date,
+                                                 restated_date, shares_basic, shares_diluted, revenue, cost_of_revenue, gross_profit, operating_expenses,
+                                                 selling_general_administrative, research_development, depreciation_amortization, operating_income,
+                                                 non_operating_income, interest_expense_net, pretax_income_loss_adj, abnormal_gains, pretax_income,
+                                                 income_tax_benefit_net, income_from_continuing_operations, net_extraordinary_gains, net_income,
+                                                 net_income_common)
+    select staging.fn_company_id(ticker::varchar) AS company_id,
+           staging.fn_currency_id(currency) AS currency_id,
+           staging.fn_accounting_period_id('Quarterly') as accounting_period_id,
+           fiscal_year::integer,
+           fiscal_period,
+           to_date(report_date, 'YYYY-MM-DD') as report_date,
+           to_date(publish_date, 'YYYY-MM-DD') as publish_date,
+           to_date(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic::bigint,
+           shares_diluted::bigint,
+           round(cast(coalesce(revenue, '0') as numeric), 2) as revenue,
+           round(cast(coalesce(cost_of_revenue, '0') as numeric), 2) as cost_of_revenue,
+           round(cast(coalesce(gross_profit, '0') as numeric), 2) as gross_profit,
+           round(cast(coalesce(operating_expenses, '0') as numeric), 2) as operating_expenses,
+           round(cast(coalesce(selling_general_administrative, '0') as numeric), 2) as selling_general_administrative,
+           round(cast(coalesce(research_development, '0') as numeric), 2) as research_development,
+           round(cast(coalesce(depreciation_amortization, '0') as numeric), 2) as depreciation_amortization,
+           round(cast(coalesce(operating_income_loss, '0') as numeric), 2) as operating_income_loss,
+           round(cast(coalesce(non_operating_income_loss, '0') as numeric), 2) as non_operating_income_loss,
+           round(cast(coalesce(interest_expense_net, '0') as numeric), 2) as interest_expense_net,
+           round(cast(coalesce(pretax_income_loss_adj, '0') as numeric), 2) as pretax_income_loss_adj,
+           round(cast(coalesce(abnormal_gains_losses, '0') as numeric), 2) as abnormal_gains_losses,
+           round(cast(coalesce(pretax_income_loss, '0') as numeric), 2) as pretax_income_loss,
+           round(cast(coalesce(income_tax_expense_benefit_net, '0') as numeric), 2) as income_tax_expense_benefit_net,
+           round(cast(coalesce(income_loss_from_continuing_operations, '0') as numeric), 2) as income_loss_from_continuing_operations,
+           round(cast(coalesce(net_extraordinary_gains_losses, '0') as numeric), 2) as net_extraordinary_gains_losses,
+           round(cast(coalesce(net_income, '0') as numeric), 2) as net_income,
+           round(cast(coalesce(net_income_common, '0') as numeric), 2) as net_income_common
+    from staging.income_statement_cn_general_quarterly
+    where ticker in (select ticker from public.company);
+
+    insert into public.income_statement_general (company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date,
+                                                 restated_date, shares_basic, shares_diluted, revenue, cost_of_revenue, gross_profit, operating_expenses,
+                                                 selling_general_administrative, research_development, depreciation_amortization, operating_income,
+                                                 non_operating_income, interest_expense_net, pretax_income_loss_adj, abnormal_gains, pretax_income,
+                                                 income_tax_benefit_net, income_from_continuing_operations, net_extraordinary_gains, net_income,
+                                                 net_income_common)
+    select staging.fn_company_id(ticker::varchar) AS company_id,
+           staging.fn_currency_id(currency) AS currency_id,
+           staging.fn_accounting_period_id('TTM') as accounting_period_id,
+           fiscal_year::integer,
+           fiscal_period,
+           to_date(report_date, 'YYYY-MM-DD') as report_date,
+           to_date(publish_date, 'YYYY-MM-DD') as publish_date,
+           to_date(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic::bigint,
+           shares_diluted::bigint,
+           round(cast(coalesce(revenue, '0') as numeric), 2) as revenue,
+           round(cast(coalesce(cost_of_revenue, '0') as numeric), 2) as cost_of_revenue,
+           round(cast(coalesce(gross_profit, '0') as numeric), 2) as gross_profit,
+           round(cast(coalesce(operating_expenses, '0') as numeric), 2) as operating_expenses,
+           round(cast(coalesce(selling_general_administrative, '0') as numeric), 2) as selling_general_administrative,
+           round(cast(coalesce(research_development, '0') as numeric), 2) as research_development,
+           round(cast(coalesce(depreciation_amortization, '0') as numeric), 2) as depreciation_amortization,
+           round(cast(coalesce(operating_income_loss, '0') as numeric), 2) as operating_income_loss,
+           round(cast(coalesce(non_operating_income_loss, '0') as numeric), 2) as non_operating_income_loss,
+           round(cast(coalesce(interest_expense_net, '0') as numeric), 2) as interest_expense_net,
+           round(cast(coalesce(pretax_income_loss_adj, '0') as numeric), 2) as pretax_income_loss_adj,
+           round(cast(coalesce(abnormal_gains_losses, '0') as numeric), 2) as abnormal_gains_losses,
+           round(cast(coalesce(pretax_income_loss, '0') as numeric), 2) as pretax_income_loss,
+           round(cast(coalesce(income_tax_expense_benefit_net, '0') as numeric), 2) as income_tax_expense_benefit_net,
+           round(cast(coalesce(income_loss_from_continuing_operations, '0') as numeric), 2) as income_loss_from_continuing_operations,
+           round(cast(coalesce(net_extraordinary_gains_losses, '0') as numeric), 2) as net_extraordinary_gains_losses,
+           round(cast(coalesce(net_income, '0') as numeric), 2) as net_income,
+           round(cast(coalesce(net_income_common, '0') as numeric), 2) as net_income_common
+    from staging.income_statement_cn_general_ttm
+    where ticker in (select ticker from public.company);
+
+    -- endregion China
+end;
+$procedurebody$ language plpgsql;
+
+create or replace procedure staging.sp_build_income_statement__bank_table()
+as
+$procedurebody$
+begin
+    truncate table public.income_statement_bank restart identity;
+
+    -- region USA
+
+    insert into public.income_statement_bank(company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date,
+                                      restated_date, shares_basic, shares_diluted, revenue, provision_for_loan_losses, net_revenue_after_provisions,
+                                      total_non_interest_expense, operating_income, non_operating_income, pretax_income, income_tax_benefit_net,
+                                      income_from_continuing_operations, net_extraordinary_gains, net_income, net_income_common)
+    select staging.fn_company_id(ticker::varchar) as company_id,
+           staging.fn_currency_id(currency) as currency_id,
+           staging.fn_accounting_period_id('Annual') as accounting_period_id,
+           fiscal_year::integer,
+           fiscal_period,
+           to_date(report_date, 'YYYY-MM-DD') as report_date,
+           to_date(publish_date, 'YYYY-MM-DD') as publish_date,
+           to_date(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic::bigint,
+           shares_diluted::bigint,
+           round(cast(coalesce(revenue, '0') as numeric), 2) as revenue,
+           round(cast(coalesce(provision_for_loan_losses, '0') as numeric), 2) as provision_for_loan_losses,
+           round(cast(coalesce(net_revenue_after_provisions, '0') as numeric), 2) as net_revenue_after_provisions,
+           round(cast(coalesce(total_non_interest_expense, '0') as numeric), 2) as total_non_interest_expense,
+           round(cast(coalesce(operating_income_loss, '0') as numeric), 2) as operating_income_loss,
+           round(cast(coalesce(non_operating_income_loss, '0') as numeric), 2) as non_operating_income_loss,
+           round(cast(coalesce(pretax_income_loss, '0') as numeric), 2) as pretax_income_loss,
+           round(cast(coalesce(income_tax_expense_benefit_net, '0') as numeric), 2) as income_tax_expense_benefit_net,
+           round(cast(coalesce(income_loss_from_continuing_operations, '0') as numeric), 2) as income_loss_from_continuing_operations,
+           round(cast(coalesce(net_extraordinary_gains_losses, '0') as numeric), 2) as net_extraordinary_gains_losses,
+           round(cast(coalesce(net_income, '0') as numeric), 2) as net_income,
+           round(cast(coalesce(net_income_common, '0') as numeric), 2) as net_income_common
+    from staging.income_statement_us_bank_annual
+    where ticker in (select ticker from company);
+
+    insert into public.income_statement_bank(company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date,
+                                             restated_date, shares_basic, shares_diluted, revenue, provision_for_loan_losses, net_revenue_after_provisions,
+                                             total_non_interest_expense, operating_income, non_operating_income, pretax_income, income_tax_benefit_net,
+                                             income_from_continuing_operations, net_extraordinary_gains, net_income, net_income_common)
+    select staging.fn_company_id(ticker::varchar) as company_id,
+           staging.fn_currency_id(currency) as currency_id,
+           staging.fn_accounting_period_id('Quarterly') as accounting_period_id,
+           fiscal_year::integer,
+           fiscal_period,
+           to_date(report_date, 'YYYY-MM-DD') as report_date,
+           to_date(publish_date, 'YYYY-MM-DD') as publish_date,
+           to_date(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic::bigint,
+           shares_diluted::bigint,
+           round(cast(coalesce(revenue, '0') as numeric), 2) as revenue,
+           round(cast(coalesce(provision_for_loan_losses, '0') as numeric), 2) as provision_for_loan_losses,
+           round(cast(coalesce(net_revenue_after_provisions, '0') as numeric), 2) as net_revenue_after_provisions,
+           round(cast(coalesce(total_non_interest_expense, '0') as numeric), 2) as total_non_interest_expense,
+           round(cast(coalesce(operating_income_loss, '0') as numeric), 2) as operating_income_loss,
+           round(cast(coalesce(non_operating_income_loss, '0') as numeric), 2) as non_operating_income_loss,
+           round(cast(coalesce(pretax_income_loss, '0') as numeric), 2) as pretax_income_loss,
+           round(cast(coalesce(income_tax_expense_benefit_net, '0') as numeric), 2) as income_tax_expense_benefit_net,
+           round(cast(coalesce(income_loss_from_continuing_operations, '0') as numeric), 2) as income_loss_from_continuing_operations,
+           round(cast(coalesce(net_extraordinary_gains_losses, '0') as numeric), 2) as net_extraordinary_gains_losses,
+           round(cast(coalesce(net_income, '0') as numeric), 2) as net_income,
+           round(cast(coalesce(net_income_common, '0') as numeric), 2) as net_income_common
+    from staging.income_statement_us_bank_quarterly
+    where ticker in (select ticker from company);
+
+    insert into public.income_statement_bank(company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date,
+                                             restated_date, shares_basic, shares_diluted, revenue, provision_for_loan_losses, net_revenue_after_provisions,
+                                             total_non_interest_expense, operating_income, non_operating_income, pretax_income, income_tax_benefit_net,
+                                             income_from_continuing_operations, net_extraordinary_gains, net_income, net_income_common)
+    select staging.fn_company_id(ticker::varchar) as company_id,
+           staging.fn_currency_id(currency) as currency_id,
+           staging.fn_accounting_period_id('TTM') as accounting_period_id,
+           fiscal_year::integer,
+           fiscal_period,
+           to_date(report_date, 'YYYY-MM-DD') as report_date,
+           to_date(publish_date, 'YYYY-MM-DD') as publish_date,
+           to_date(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic::bigint,
+           shares_diluted::bigint,
+           round(cast(coalesce(revenue, '0') as numeric), 2) as revenue,
+           round(cast(coalesce(provision_for_loan_losses, '0') as numeric), 2) as provision_for_loan_losses,
+           round(cast(coalesce(net_revenue_after_provisions, '0') as numeric), 2) as net_revenue_after_provisions,
+           round(cast(coalesce(total_non_interest_expense, '0') as numeric), 2) as total_non_interest_expense,
+           round(cast(coalesce(operating_income_loss, '0') as numeric), 2) as operating_income_loss,
+           round(cast(coalesce(non_operating_income_loss, '0') as numeric), 2) as non_operating_income_loss,
+           round(cast(coalesce(pretax_income_loss, '0') as numeric), 2) as pretax_income_loss,
+           round(cast(coalesce(income_tax_expense_benefit_net, '0') as numeric), 2) as income_tax_expense_benefit_net,
+           round(cast(coalesce(income_loss_from_continuing_operations, '0') as numeric), 2) as income_loss_from_continuing_operations,
+           round(cast(coalesce(net_extraordinary_gains_losses, '0') as numeric), 2) as net_extraordinary_gains_losses,
+           round(cast(coalesce(net_income, '0') as numeric), 2) as net_income,
+           round(cast(coalesce(net_income_common, '0') as numeric), 2) as net_income_common
+    from staging.income_statement_us_bank_ttm
+    where ticker in (select ticker from company);
+
+    -- endregion USA
+
+    -- region Germany
+
+    insert into public.income_statement_bank(company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date,
+                                             restated_date, shares_basic, shares_diluted, revenue, provision_for_loan_losses, net_revenue_after_provisions,
+                                             total_non_interest_expense, operating_income, non_operating_income, pretax_income, income_tax_benefit_net,
+                                             income_from_continuing_operations, net_extraordinary_gains, net_income, net_income_common)
+    select staging.fn_company_id(ticker::varchar) as company_id,
+           staging.fn_currency_id(currency) as currency_id,
+           staging.fn_accounting_period_id('Annual') as accounting_period_id,
+           fiscal_year::integer,
+           fiscal_period,
+           to_date(report_date, 'YYYY-MM-DD') as report_date,
+           to_date(publish_date, 'YYYY-MM-DD') as publish_date,
+           to_date(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic::bigint,
+           shares_diluted::bigint,
+           round(cast(coalesce(revenue, '0') as numeric), 2) as revenue,
+           round(cast(coalesce(provision_for_loan_losses, '0') as numeric), 2) as provision_for_loan_losses,
+           round(cast(coalesce(net_revenue_after_provisions, '0') as numeric), 2) as net_revenue_after_provisions,
+           round(cast(coalesce(total_non_interest_expense, '0') as numeric), 2) as total_non_interest_expense,
+           round(cast(coalesce(operating_income_loss, '0') as numeric), 2) as operating_income_loss,
+           round(cast(coalesce(non_operating_income_loss, '0') as numeric), 2) as non_operating_income_loss,
+           round(cast(coalesce(pretax_income_loss, '0') as numeric), 2) as pretax_income_loss,
+           round(cast(coalesce(income_tax_expense_benefit_net, '0') as numeric), 2) as income_tax_expense_benefit_net,
+           round(cast(coalesce(income_loss_from_continuing_operations, '0') as numeric), 2) as income_loss_from_continuing_operations,
+           round(cast(coalesce(net_extraordinary_gains_losses, '0') as numeric), 2) as net_extraordinary_gains_losses,
+           round(cast(coalesce(net_income, '0') as numeric), 2) as net_income,
+           round(cast(coalesce(net_income_common, '0') as numeric), 2) as net_income_common
+    from staging.income_statement_de_bank_annual
+    where ticker in (select ticker from company);
+
+    insert into public.income_statement_bank(company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date,
+                                             restated_date, shares_basic, shares_diluted, revenue, provision_for_loan_losses, net_revenue_after_provisions,
+                                             total_non_interest_expense, operating_income, non_operating_income, pretax_income, income_tax_benefit_net,
+                                             income_from_continuing_operations, net_extraordinary_gains, net_income, net_income_common)
+    select staging.fn_company_id(ticker::varchar) as company_id,
+           staging.fn_currency_id(currency) as currency_id,
+           staging.fn_accounting_period_id('Quarterly') as accounting_period_id,
+           fiscal_year::integer,
+           fiscal_period,
+           to_date(report_date, 'YYYY-MM-DD') as report_date,
+           to_date(publish_date, 'YYYY-MM-DD') as publish_date,
+           to_date(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic::bigint,
+           shares_diluted::bigint,
+           round(cast(coalesce(revenue, '0') as numeric), 2) as revenue,
+           round(cast(coalesce(provision_for_loan_losses, '0') as numeric), 2) as provision_for_loan_losses,
+           round(cast(coalesce(net_revenue_after_provisions, '0') as numeric), 2) as net_revenue_after_provisions,
+           round(cast(coalesce(total_non_interest_expense, '0') as numeric), 2) as total_non_interest_expense,
+           round(cast(coalesce(operating_income_loss, '0') as numeric), 2) as operating_income_loss,
+           round(cast(coalesce(non_operating_income_loss, '0') as numeric), 2) as non_operating_income_loss,
+           round(cast(coalesce(pretax_income_loss, '0') as numeric), 2) as pretax_income_loss,
+           round(cast(coalesce(income_tax_expense_benefit_net, '0') as numeric), 2) as income_tax_expense_benefit_net,
+           round(cast(coalesce(income_loss_from_continuing_operations, '0') as numeric), 2) as income_loss_from_continuing_operations,
+           round(cast(coalesce(net_extraordinary_gains_losses, '0') as numeric), 2) as net_extraordinary_gains_losses,
+           round(cast(coalesce(net_income, '0') as numeric), 2) as net_income,
+           round(cast(coalesce(net_income_common, '0') as numeric), 2) as net_income_common
+    from staging.income_statement_de_bank_quarterly
+    where ticker in (select ticker from company);
+
+    insert into public.income_statement_bank(company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date,
+                                             restated_date, shares_basic, shares_diluted, revenue, provision_for_loan_losses, net_revenue_after_provisions,
+                                             total_non_interest_expense, operating_income, non_operating_income, pretax_income, income_tax_benefit_net,
+                                             income_from_continuing_operations, net_extraordinary_gains, net_income, net_income_common)
+    select staging.fn_company_id(ticker::varchar) as company_id,
+           staging.fn_currency_id(currency) as currency_id,
+           staging.fn_accounting_period_id('TTM') as accounting_period_id,
+           fiscal_year::integer,
+           fiscal_period,
+           to_date(report_date, 'YYYY-MM-DD') as report_date,
+           to_date(publish_date, 'YYYY-MM-DD') as publish_date,
+           to_date(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic::bigint,
+           shares_diluted::bigint,
+           round(cast(coalesce(revenue, '0') as numeric), 2) as revenue,
+           round(cast(coalesce(provision_for_loan_losses, '0') as numeric), 2) as provision_for_loan_losses,
+           round(cast(coalesce(net_revenue_after_provisions, '0') as numeric), 2) as net_revenue_after_provisions,
+           round(cast(coalesce(total_non_interest_expense, '0') as numeric), 2) as total_non_interest_expense,
+           round(cast(coalesce(operating_income_loss, '0') as numeric), 2) as operating_income_loss,
+           round(cast(coalesce(non_operating_income_loss, '0') as numeric), 2) as non_operating_income_loss,
+           round(cast(coalesce(pretax_income_loss, '0') as numeric), 2) as pretax_income_loss,
+           round(cast(coalesce(income_tax_expense_benefit_net, '0') as numeric), 2) as income_tax_expense_benefit_net,
+           round(cast(coalesce(income_loss_from_continuing_operations, '0') as numeric), 2) as income_loss_from_continuing_operations,
+           round(cast(coalesce(net_extraordinary_gains_losses, '0') as numeric), 2) as net_extraordinary_gains_losses,
+           round(cast(coalesce(net_income, '0') as numeric), 2) as net_income,
+           round(cast(coalesce(net_income_common, '0') as numeric), 2) as net_income_common
+    from staging.income_statement_de_bank_ttm
+    where ticker in (select ticker from company);
+
+    -- endregion Germany
+
+    -- region China
+
+    insert into public.income_statement_bank(company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date,
+                                             restated_date, shares_basic, shares_diluted, revenue, provision_for_loan_losses, net_revenue_after_provisions,
+                                             total_non_interest_expense, operating_income, non_operating_income, pretax_income, income_tax_benefit_net,
+                                             income_from_continuing_operations, net_extraordinary_gains, net_income, net_income_common)
+    select staging.fn_company_id(ticker::varchar) as company_id,
+           staging.fn_currency_id(currency) as currency_id,
+           staging.fn_accounting_period_id('Annual') as accounting_period_id,
+           fiscal_year::integer,
+           fiscal_period,
+           to_date(report_date, 'YYYY-MM-DD') as report_date,
+           to_date(publish_date, 'YYYY-MM-DD') as publish_date,
+           to_date(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic::bigint,
+           shares_diluted::bigint,
+           round(cast(coalesce(revenue, '0') as numeric), 2) as revenue,
+           round(cast(coalesce(provision_for_loan_losses, '0') as numeric), 2) as provision_for_loan_losses,
+           round(cast(coalesce(net_revenue_after_provisions, '0') as numeric), 2) as net_revenue_after_provisions,
+           round(cast(coalesce(total_non_interest_expense, '0') as numeric), 2) as total_non_interest_expense,
+           round(cast(coalesce(operating_income_loss, '0') as numeric), 2) as operating_income_loss,
+           round(cast(coalesce(non_operating_income_loss, '0') as numeric), 2) as non_operating_income_loss,
+           round(cast(coalesce(pretax_income_loss, '0') as numeric), 2) as pretax_income_loss,
+           round(cast(coalesce(income_tax_expense_benefit_net, '0') as numeric), 2) as income_tax_expense_benefit_net,
+           round(cast(coalesce(income_loss_from_continuing_operations, '0') as numeric), 2) as income_loss_from_continuing_operations,
+           round(cast(coalesce(net_extraordinary_gains_losses, '0') as numeric), 2) as net_extraordinary_gains_losses,
+           round(cast(coalesce(net_income, '0') as numeric), 2) as net_income,
+           round(cast(coalesce(net_income_common, '0') as numeric), 2) as net_income_common
+    from staging.income_statement_cn_bank_annual
+    where ticker in (select ticker from company);
+
+    insert into public.income_statement_bank(company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date,
+                                             restated_date, shares_basic, shares_diluted, revenue, provision_for_loan_losses, net_revenue_after_provisions,
+                                             total_non_interest_expense, operating_income, non_operating_income, pretax_income, income_tax_benefit_net,
+                                             income_from_continuing_operations, net_extraordinary_gains, net_income, net_income_common)
+    select staging.fn_company_id(ticker::varchar) as company_id,
+           staging.fn_currency_id(currency) as currency_id,
+           staging.fn_accounting_period_id('Quarterly') as accounting_period_id,
+           fiscal_year::integer,
+           fiscal_period,
+           to_date(report_date, 'YYYY-MM-DD') as report_date,
+           to_date(publish_date, 'YYYY-MM-DD') as publish_date,
+           to_date(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic::bigint,
+           shares_diluted::bigint,
+           round(cast(coalesce(revenue, '0') as numeric), 2) as revenue,
+           round(cast(coalesce(provision_for_loan_losses, '0') as numeric), 2) as provision_for_loan_losses,
+           round(cast(coalesce(net_revenue_after_provisions, '0') as numeric), 2) as net_revenue_after_provisions,
+           round(cast(coalesce(total_non_interest_expense, '0') as numeric), 2) as total_non_interest_expense,
+           round(cast(coalesce(operating_income_loss, '0') as numeric), 2) as operating_income_loss,
+           round(cast(coalesce(non_operating_income_loss, '0') as numeric), 2) as non_operating_income_loss,
+           round(cast(coalesce(pretax_income_loss, '0') as numeric), 2) as pretax_income_loss,
+           round(cast(coalesce(income_tax_expense_benefit_net, '0') as numeric), 2) as income_tax_expense_benefit_net,
+           round(cast(coalesce(income_loss_from_continuing_operations, '0') as numeric), 2) as income_loss_from_continuing_operations,
+           round(cast(coalesce(net_extraordinary_gains_losses, '0') as numeric), 2) as net_extraordinary_gains_losses,
+           round(cast(coalesce(net_income, '0') as numeric), 2) as net_income,
+           round(cast(coalesce(net_income_common, '0') as numeric), 2) as net_income_common
+    from staging.income_statement_cn_bank_quarterly
+    where ticker in (select ticker from company);
+
+    insert into public.income_statement_bank(company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date,
+                                             restated_date, shares_basic, shares_diluted, revenue, provision_for_loan_losses, net_revenue_after_provisions,
+                                             total_non_interest_expense, operating_income, non_operating_income, pretax_income, income_tax_benefit_net,
+                                             income_from_continuing_operations, net_extraordinary_gains, net_income, net_income_common)
+    select staging.fn_company_id(ticker::varchar) as company_id,
+           staging.fn_currency_id(currency) as currency_id,
+           staging.fn_accounting_period_id('TTM') as accounting_period_id,
+           fiscal_year::integer,
+           fiscal_period,
+           to_date(report_date, 'YYYY-MM-DD') as report_date,
+           to_date(publish_date, 'YYYY-MM-DD') as publish_date,
+           to_date(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic::bigint,
+           shares_diluted::bigint,
+           round(cast(coalesce(revenue, '0') as numeric), 2) as revenue,
+           round(cast(coalesce(provision_for_loan_losses, '0') as numeric), 2) as provision_for_loan_losses,
+           round(cast(coalesce(net_revenue_after_provisions, '0') as numeric), 2) as net_revenue_after_provisions,
+           round(cast(coalesce(total_non_interest_expense, '0') as numeric), 2) as total_non_interest_expense,
+           round(cast(coalesce(operating_income_loss, '0') as numeric), 2) as operating_income_loss,
+           round(cast(coalesce(non_operating_income_loss, '0') as numeric), 2) as non_operating_income_loss,
+           round(cast(coalesce(pretax_income_loss, '0') as numeric), 2) as pretax_income_loss,
+           round(cast(coalesce(income_tax_expense_benefit_net, '0') as numeric), 2) as income_tax_expense_benefit_net,
+           round(cast(coalesce(income_loss_from_continuing_operations, '0') as numeric), 2) as income_loss_from_continuing_operations,
+           round(cast(coalesce(net_extraordinary_gains_losses, '0') as numeric), 2) as net_extraordinary_gains_losses,
+           round(cast(coalesce(net_income, '0') as numeric), 2) as net_income,
+           round(cast(coalesce(net_income_common, '0') as numeric), 2) as net_income_common
+    from staging.income_statement_cn_bank_ttm
+    where ticker in (select ticker from company);
+
+    -- endregion China
+end
+$procedurebody$ language plpgsql;
+
+create or replace procedure staging.sp_build_income_statement_insurance_table()
+as
+$procedurebody$
+begin
+    truncate table public.income_statement_insurance restart identity;
+
+    -- region USA
+
+    insert into public.income_statement_insurance(company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date,
+                                           restated_date, shares_basic, shares_diluted, revenue, total_claims_losses, operating_income, pretax_income,
+                                           income_tax_benefit_net, income_from_affiliates_net_of_taxes, income_from_continuing_operations,
+                                           net_extraordinary_gains, net_income, net_income_common)
+    select staging.fn_company_id(ticker::varchar) as company_id,
+           staging.fn_currency_id(currency) as currency_id,
+           staging.fn_accounting_period_id('Annual') as accounting_period_id,
+           fiscal_year::integer,
+           fiscal_period,
+           TO_DATE(report_date, 'YYYY-MM-DD') as report_date,
+           TO_DATE(publish_date, 'YYYY-MM-DD') as publish_date,
+           TO_DATE(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic::bigint,
+           shares_diluted::bigint,
+           round(cast(coalesce(revenue, '0') as numeric), 2) as revenue,
+           round(cast(coalesce(total_claims_losses, '0') as numeric), 2) as total_claims_losses,
+           round(cast(coalesce(operating_income_loss, '0') as numeric), 2) as operating_income_loss,
+           round(cast(coalesce(pretax_income_loss, '0') as numeric), 2) as pretax_income_loss,
+           round(cast(coalesce(income_tax_expense_benefit_net, '0') as numeric), 2) as income_tax_expense_benefit_net,
+           round(cast(coalesce(income_loss_from_affiliates_net_of_taxes, '0') as numeric), 2) as income_loss_from_affiliates_net_of_taxes,
+           round(cast(coalesce(income_loss_from_continuing_operations, '0') as numeric), 2) as income_loss_from_continuing_operations,
+           round(cast(coalesce(net_extraordinary_gains_losses, '0') as numeric), 2) as net_extraordinary_gains_losses,
+           round(cast(coalesce(net_income, '0') as numeric), 2) as net_income,
+           round(cast(coalesce(net_income_common, '0') as numeric), 2) as net_income_common
+    from staging.income_statement_us_insurance_annual
+    where ticker in (select ticker from public.company);
+
+    insert into public.income_statement_insurance(company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date,
+                                                  restated_date, shares_basic, shares_diluted, revenue, total_claims_losses, operating_income, pretax_income,
+                                                  income_tax_benefit_net, income_from_affiliates_net_of_taxes, income_from_continuing_operations,
+                                                  net_extraordinary_gains, net_income, net_income_common)
+    select staging.fn_company_id(ticker::varchar) as company_id,
+           staging.fn_currency_id(currency) as currency_id,
+           staging.fn_accounting_period_id('Quarterly') as accounting_period_id,
+           fiscal_year::integer,
+           fiscal_period,
+           TO_DATE(report_date, 'YYYY-MM-DD') as report_date,
+           TO_DATE(publish_date, 'YYYY-MM-DD') as publish_date,
+           TO_DATE(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic::bigint,
+           shares_diluted::bigint,
+           round(cast(coalesce(revenue, '0') as numeric), 2) as revenue,
+           round(cast(coalesce(total_claims_losses, '0') as numeric), 2) as total_claims_losses,
+           round(cast(coalesce(operating_income_loss, '0') as numeric), 2) as operating_income_loss,
+           round(cast(coalesce(pretax_income_loss, '0') as numeric), 2) as pretax_income_loss,
+           round(cast(coalesce(income_tax_expense_benefit_net, '0') as numeric), 2) as income_tax_expense_benefit_net,
+           round(cast(coalesce(income_loss_from_affiliates_net_of_taxes, '0') as numeric), 2) as income_loss_from_affiliates_net_of_taxes,
+           round(cast(coalesce(income_loss_from_continuing_operations, '0') as numeric), 2) as income_loss_from_continuing_operations,
+           round(cast(coalesce(net_extraordinary_gains_losses, '0') as numeric), 2) as net_extraordinary_gains_losses,
+           round(cast(coalesce(net_income, '0') as numeric), 2) as net_income,
+           round(cast(coalesce(net_income_common, '0') as numeric), 2) as net_income_common
+    from staging.income_statement_us_insurance_quarterly
+    where ticker in (select ticker from public.company);
+
+    insert into public.income_statement_insurance(company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date,
+                                                  restated_date, shares_basic, shares_diluted, revenue, total_claims_losses, operating_income, pretax_income,
+                                                  income_tax_benefit_net, income_from_affiliates_net_of_taxes, income_from_continuing_operations,
+                                                  net_extraordinary_gains, net_income, net_income_common)
+    select staging.fn_company_id(ticker::varchar) as company_id,
+           staging.fn_currency_id(currency) as currency_id,
+           staging.fn_accounting_period_id('TTM') as accounting_period_id,
+           fiscal_year::integer,
+           fiscal_period,
+           to_date(report_date, 'YYYY-MM-DD') as report_date,
+           to_date(publish_date, 'YYYY-MM-DD') as publish_date,
+           to_date(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic::bigint,
+           shares_diluted::bigint,
+           round(cast(coalesce(revenue, '0') as numeric), 2) as revenue,
+           round(cast(coalesce(total_claims_losses, '0') as numeric), 2) as total_claims_losses,
+           round(cast(coalesce(operating_income_loss, '0') as numeric), 2) as operating_income_loss,
+           round(cast(coalesce(pretax_income_loss, '0') as numeric), 2) as pretax_income_loss,
+           round(cast(coalesce(income_tax_expense_benefit_net, '0') as numeric), 2) as income_tax_expense_benefit_net,
+           round(cast(coalesce(income_loss_from_affiliates_net_of_taxes, '0') as numeric), 2) as income_loss_from_affiliates_net_of_taxes,
+           round(cast(coalesce(income_loss_from_continuing_operations, '0') as numeric), 2) as income_loss_from_continuing_operations,
+           round(cast(coalesce(net_extraordinary_gains_losses, '0') as numeric), 2) as net_extraordinary_gains_losses,
+           round(cast(coalesce(net_income, '0') as numeric), 2) as net_income,
+           round(cast(coalesce(net_income_common, '0') as numeric), 2) as net_income_common
+    from staging.income_statement_us_insurance_ttm
+    where ticker in (select ticker from public.company);
+
+    -- endregion USA
+
+    -- region Germany
+
+    insert into public.income_statement_insurance(company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date,
+                                                  restated_date, shares_basic, shares_diluted, revenue, total_claims_losses, operating_income, pretax_income,
+                                                  income_tax_benefit_net, income_from_affiliates_net_of_taxes, income_from_continuing_operations,
+                                                  net_extraordinary_gains, net_income, net_income_common)
+    select staging.fn_company_id(ticker::varchar) as company_id,
+           staging.fn_currency_id(currency) as currency_id,
+           staging.fn_accounting_period_id('Annual') as accounting_period_id,
+           fiscal_year::integer,
+           fiscal_period,
+           TO_DATE(report_date, 'YYYY-MM-DD') as report_date,
+           TO_DATE(publish_date, 'YYYY-MM-DD') as publish_date,
+           TO_DATE(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic::bigint,
+           shares_diluted::bigint,
+           round(cast(coalesce(revenue, '0') as numeric), 2) as revenue,
+           round(cast(coalesce(total_claims_losses, '0') as numeric), 2) as total_claims_losses,
+           round(cast(coalesce(operating_income_loss, '0') as numeric), 2) as operating_income_loss,
+           round(cast(coalesce(pretax_income_loss, '0') as numeric), 2) as pretax_income_loss,
+           round(cast(coalesce(income_tax_expense_benefit_net, '0') as numeric), 2) as income_tax_expense_benefit_net,
+           round(cast(coalesce(income_loss_from_affiliates_net_of_taxes, '0') as numeric), 2) as income_loss_from_affiliates_net_of_taxes,
+           round(cast(coalesce(income_loss_from_continuing_operations, '0') as numeric), 2) as income_loss_from_continuing_operations,
+           round(cast(coalesce(net_extraordinary_gains_losses, '0') as numeric), 2) as net_extraordinary_gains_losses,
+           round(cast(coalesce(net_income, '0') as numeric), 2) as net_income,
+           round(cast(coalesce(net_income_common, '0') as numeric), 2) as net_income_common
+    from staging.income_statement_de_insurance_annual
+    where ticker in (select ticker from public.company);
+
+    insert into public.income_statement_insurance(company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date,
+                                                  restated_date, shares_basic, shares_diluted, revenue, total_claims_losses, operating_income, pretax_income,
+                                                  income_tax_benefit_net, income_from_affiliates_net_of_taxes, income_from_continuing_operations,
+                                                  net_extraordinary_gains, net_income, net_income_common)
+    select staging.fn_company_id(ticker::varchar) as company_id,
+           staging.fn_currency_id(currency) as currency_id,
+           staging.fn_accounting_period_id('Quarterly') as accounting_period_id,
+           fiscal_year::integer,
+           fiscal_period,
+           to_date(report_date, 'YYYY-MM-DD') as report_date,
+           to_date(publish_date, 'YYYY-MM-DD') as publish_date,
+           to_date(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic::bigint,
+           shares_diluted::bigint,
+           round(cast(coalesce(revenue, '0') as numeric), 2) as revenue,
+           round(cast(coalesce(total_claims_losses, '0') as numeric), 2) as total_claims_losses,
+           round(cast(coalesce(operating_income_loss, '0') as numeric), 2) as operating_income_loss,
+           round(cast(coalesce(pretax_income_loss, '0') as numeric), 2) as pretax_income_loss,
+           round(cast(coalesce(income_tax_expense_benefit_net, '0') as numeric), 2) as income_tax_expense_benefit_net,
+           round(cast(coalesce(income_loss_from_affiliates_net_of_taxes, '0') as numeric), 2) as income_loss_from_affiliates_net_of_taxes,
+           round(cast(coalesce(income_loss_from_continuing_operations, '0') as numeric), 2) as income_loss_from_continuing_operations,
+           round(cast(coalesce(net_extraordinary_gains_losses, '0') as numeric), 2) as net_extraordinary_gains_losses,
+           round(cast(coalesce(net_income, '0') as numeric), 2) as net_income,
+           round(cast(coalesce(net_income_common, '0') as numeric), 2) as net_income_common
+    from staging.income_statement_de_insurance_quarterly
+    where ticker in (select ticker from public.company);
+
+    insert into public.income_statement_insurance(company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date,
+                                                  restated_date, shares_basic, shares_diluted, revenue, total_claims_losses, operating_income, pretax_income,
+                                                  income_tax_benefit_net, income_from_affiliates_net_of_taxes, income_from_continuing_operations,
+                                                  net_extraordinary_gains, net_income, net_income_common)
+    select staging.fn_company_id(ticker::varchar) as company_id,
+           staging.fn_currency_id(currency) as currency_id,
+           staging.fn_accounting_period_id('TTM') as accounting_period_id,
+           fiscal_year::integer,
+           fiscal_period,
+           to_date(report_date, 'YYYY-MM-DD') as report_date,
+           to_date(publish_date, 'YYYY-MM-DD') as publish_date,
+           to_date(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic::bigint,
+           shares_diluted::bigint,
+           round(cast(coalesce(revenue, '0') as numeric), 2) as revenue,
+           round(cast(coalesce(total_claims_losses, '0') as numeric), 2) as total_claims_losses,
+           round(cast(coalesce(operating_income_loss, '0') as numeric), 2) as operating_income_loss,
+           round(cast(coalesce(pretax_income_loss, '0') as numeric), 2) as pretax_income_loss,
+           round(cast(coalesce(income_tax_expense_benefit_net, '0') as numeric), 2) as income_tax_expense_benefit_net,
+           round(cast(coalesce(income_loss_from_affiliates_net_of_taxes, '0') as numeric), 2) as income_loss_from_affiliates_net_of_taxes,
+           round(cast(coalesce(income_loss_from_continuing_operations, '0') as numeric), 2) as income_loss_from_continuing_operations,
+           round(cast(coalesce(net_extraordinary_gains_losses, '0') as numeric), 2) as net_extraordinary_gains_losses,
+           round(cast(coalesce(net_income, '0') as numeric), 2) as net_income,
+           round(cast(coalesce(net_income_common, '0') as numeric), 2) as net_income_common
+    from staging.income_statement_de_insurance_ttm
+    where ticker in (select ticker from public.company);
+    -- endregion Germany
+
+    -- region China
+
+    insert into public.income_statement_insurance(company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date,
+                                                  restated_date, shares_basic, shares_diluted, revenue, total_claims_losses, operating_income, pretax_income,
+                                                  income_tax_benefit_net, income_from_affiliates_net_of_taxes, income_from_continuing_operations,
+                                                  net_extraordinary_gains, net_income, net_income_common)
+    select staging.fn_company_id(ticker::varchar) as company_id,
+           staging.fn_currency_id(currency) as currency_id,
+           staging.fn_accounting_period_id('Annual') as accounting_period_id,
+           fiscal_year::integer,
+           fiscal_period,
+           to_date(report_date, 'YYYY-MM-DD') as report_date,
+           to_date(publish_date, 'YYYY-MM-DD') as publish_date,
+           to_date(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic::bigint,
+           shares_diluted::bigint,
+           round(cast(coalesce(revenue, '0') as numeric), 2) as revenue,
+           round(cast(coalesce(total_claims_losses, '0') as numeric), 2) as total_claims_losses,
+           round(cast(coalesce(operating_income_loss, '0') as numeric), 2) as operating_income_loss,
+           round(cast(coalesce(pretax_income_loss, '0') as numeric), 2) as pretax_income_loss,
+           round(cast(coalesce(income_tax_expense_benefit_net, '0') as numeric), 2) as income_tax_expense_benefit_net,
+           round(cast(coalesce(income_loss_from_affiliates_net_of_taxes, '0') as numeric), 2) as income_loss_from_affiliates_net_of_taxes,
+           round(cast(coalesce(income_loss_from_continuing_operations, '0') as numeric), 2) as income_loss_from_continuing_operations,
+           round(cast(coalesce(net_extraordinary_gains_losses, '0') as numeric), 2) as net_extraordinary_gains_losses,
+           round(cast(coalesce(net_income, '0') as numeric), 2) as net_income,
+           round(cast(coalesce(net_income_common, '0') as numeric), 2) as net_income_common
+    from staging.income_statement_cn_insurance_annual
+    where ticker in (select ticker from public.company);
+
+    insert into public.income_statement_insurance(company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date,
+                                                  restated_date, shares_basic, shares_diluted, revenue, total_claims_losses, operating_income, pretax_income,
+                                                  income_tax_benefit_net, income_from_affiliates_net_of_taxes, income_from_continuing_operations,
+                                                  net_extraordinary_gains, net_income, net_income_common)
+    select staging.fn_company_id(ticker::varchar) as company_id,
+           staging.fn_currency_id(currency) as currency_id,
+           staging.fn_accounting_period_id('Quarterly') as accounting_period_id,
+           fiscal_year::integer,
+           fiscal_period,
+           to_date(report_date, 'YYYY-MM-DD') as report_date,
+           to_date(publish_date, 'YYYY-MM-DD') as publish_date,
+           to_date(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic::bigint,
+           shares_diluted::bigint,
+           round(cast(coalesce(revenue, '0') as numeric), 2) as revenue,
+           round(cast(coalesce(total_claims_losses, '0') as numeric), 2) as total_claims_losses,
+           round(cast(coalesce(operating_income_loss, '0') as numeric), 2) as operating_income_loss,
+           round(cast(coalesce(pretax_income_loss, '0') as numeric), 2) as pretax_income_loss,
+           round(cast(coalesce(income_tax_expense_benefit_net, '0') as numeric), 2) as income_tax_expense_benefit_net,
+           round(cast(coalesce(income_loss_from_affiliates_net_of_taxes, '0') as numeric), 2) as income_loss_from_affiliates_net_of_taxes,
+           round(cast(coalesce(income_loss_from_continuing_operations, '0') as numeric), 2) as income_loss_from_continuing_operations,
+           round(cast(coalesce(net_extraordinary_gains_losses, '0') as numeric), 2) as net_extraordinary_gains_losses,
+           round(cast(coalesce(net_income, '0') as numeric), 2) as net_income,
+           round(cast(coalesce(net_income_common, '0') as numeric), 2) as net_income_common
+    from staging.income_statement_cn_insurance_quarterly
+    where ticker in (select ticker from public.company);
+
+    insert into public.income_statement_insurance(company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date,
+                                                  restated_date, shares_basic, shares_diluted, revenue, total_claims_losses, operating_income, pretax_income,
+                                                  income_tax_benefit_net, income_from_affiliates_net_of_taxes, income_from_continuing_operations,
+                                                  net_extraordinary_gains, net_income, net_income_common)
+    select staging.fn_company_id(ticker::varchar) as company_id,
+           staging.fn_currency_id(currency) as currency_id,
+           staging.fn_accounting_period_id('TTM') as accounting_period_id,
+           fiscal_year::integer,
+           fiscal_period,
+           to_date(report_date, 'YYYY-MM-DD') as report_date,
+           to_date(publish_date, 'YYYY-MM-DD') as publish_date,
+           to_date(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic::bigint,
+           shares_diluted::bigint,
+           round(cast(coalesce(revenue, '0') as numeric), 2) as revenue,
+           round(cast(coalesce(total_claims_losses, '0') as numeric), 2) as total_claims_losses,
+           round(cast(coalesce(operating_income_loss, '0') as numeric), 2) as operating_income_loss,
+           round(cast(coalesce(pretax_income_loss, '0') as numeric), 2) as pretax_income_loss,
+           round(cast(coalesce(income_tax_expense_benefit_net, '0') as numeric), 2) as income_tax_expense_benefit_net,
+           round(cast(coalesce(income_loss_from_affiliates_net_of_taxes, '0') as numeric), 2) as income_loss_from_affiliates_net_of_taxes,
+           round(cast(coalesce(income_loss_from_continuing_operations, '0') as numeric), 2) as income_loss_from_continuing_operations,
+           round(cast(coalesce(net_extraordinary_gains_losses, '0') as numeric), 2) as net_extraordinary_gains_losses,
+           round(cast(coalesce(net_income, '0') as numeric), 2) as net_income,
+           round(cast(coalesce(net_income_common, '0') as numeric), 2) as net_income_common
+    from staging.income_statement_cn_insurance_ttm
+    where ticker in (select ticker from public.company);
+
+    -- endregion
+end
+$procedurebody$ language plpgsql;
 
 -- endregion Build Stored Procedures
 
