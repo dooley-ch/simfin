@@ -5673,6 +5673,676 @@ begin
 end
 $procedurebody$ language plpgsql;
 
+create or replace procedure staging.sp_build_balance_sheet_general_table()
+as
+$procedurebody$
+begin
+    truncate table public.balance_sheet_general restart identity;
+
+    -- region USA
+
+    insert into balance_sheet_general (company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date, restated_date,
+                                       shares_basic, shares_diluted, cash_cash_equivalents_short_term_investments, accounts_notes_receivable, inventories,
+                                       total_current_assets, property_plant_equipment_net, long_term_investments_receivables, other_long_term_assets,
+                                       total_noncurrent_assets, total_assets, payables_accruals, short_term_debt, total_current_liabilities, long_term_debt,
+                                       total_noncurrent_liabilities, total_liabilities, share_capital_additional_paid_in_capital, treasury_stock, retained_earnings,
+                                       total_equity, total_liabilities_equity)
+    select staging.fn_company_id(ticker) as company_id,
+           staging.fn_currency_id(currency) as currency_id,
+           staging.fn_accounting_period_id('Annual') as accounting_period_id,
+           fiscal_year::integer,
+           fiscal_period,
+           to_date(report_date, 'YYYY-MM-DD') as report_date,
+           to_date(publish_date, 'YYYY-MM-DD') as publish_date,
+           to_date(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic::BIGINT,
+           shares_diluted::BIGINT,
+           round(cast(coalesce(cash_cash_equivalents_short_term_investments, '0') as numeric), 2) as cash_cash_equivalents_short_term_investments,
+           round(cast(coalesce(accounts_notes_receivable, '0') as numeric), 2) as accounts_notes_receivable,
+           round(cast(coalesce(inventories, '0') as numeric), 2) as inventories,
+           round(cast(coalesce(total_current_assets, '0') as numeric), 2) as total_current_assets,
+           round(cast(coalesce(property_plant_equipment, '0') as numeric), 2) as property_plant_equipment,
+           round(cast(coalesce(long_term_investments_receivables, '0') as numeric), 2) as long_term_investments_receivables,
+           round(cast(coalesce(other_long_term_assets, '0') as numeric), 2) as other_long_term_assets,
+           round(cast(coalesce(total_noncurrent_assets, '0') as numeric), 2) as total_noncurrent_assets,
+           round(cast(coalesce(total_assets, '0') as numeric), 2) as total_assets,
+           round(cast(coalesce(payables_accruals, '0') as numeric), 2) as payables_accruals,
+           round(cast(coalesce(short_term_debt, '0') as numeric), 2) as short_term_debt,
+           round(cast(coalesce(total_current_liabilities, '0') as numeric), 2) as total_current_liabilities,
+           round(cast(coalesce(long_term_debt, '0') as numeric), 2) as long_term_debt,
+           round(cast(coalesce(total_noncurrent_liabilities, '0') as numeric), 2) as total_noncurrent_liabilities,
+           round(cast(coalesce(total_liabilities, '0') as numeric), 2) as total_liabilities,
+           round(cast(coalesce(share_capital_additional_paid_in_capital, '0') as numeric), 2) as share_capital_additional_paid_in_capital,
+           round(cast(coalesce(treasury_stock, '0') as numeric), 2) as treasury_stock,
+           round(cast(coalesce(retained_earnings, '0') as numeric), 2) as retained_earnings,
+           round(cast(coalesce(total_equity, '0') as numeric), 2) as total_equity,
+           round(cast(coalesce(total_liabilities_equity, '0') as numeric), 2) as total_liabilities_equity
+    from staging.balance_sheet_us_general_annual
+    where ticker in (select ticker from company);
+
+    insert into balance_sheet_general (company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date, restated_date,
+                                       shares_basic, shares_diluted, cash_cash_equivalents_short_term_investments, accounts_notes_receivable, inventories,
+                                       total_current_assets, property_plant_equipment_net, long_term_investments_receivables, other_long_term_assets,
+                                       total_noncurrent_assets, total_assets, payables_accruals, short_term_debt, total_current_liabilities, long_term_debt,
+                                       total_noncurrent_liabilities, total_liabilities, share_capital_additional_paid_in_capital, treasury_stock, retained_earnings,
+                                       total_equity, total_liabilities_equity)
+    select staging.fn_company_id(ticker) as company_id,
+           staging.fn_currency_id(currency) as currency_id,
+           staging.fn_accounting_period_id('Quarterly') as accounting_period_id,
+           fiscal_year::integer,
+           fiscal_period,
+           to_date(report_date, 'YYYY-MM-DD') as report_date,
+           to_date(publish_date, 'YYYY-MM-DD') as publish_date,
+           to_date(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic::BIGINT,
+           shares_diluted::BIGINT,
+           round(cast(coalesce(cash_cash_equivalents_short_term_investments, '0') as numeric), 2) as cash_cash_equivalents_short_term_investments,
+           round(cast(coalesce(accounts_notes_receivable, '0') as numeric), 2) as accounts_notes_receivable,
+           round(cast(coalesce(inventories, '0') as numeric), 2) as inventories,
+           round(cast(coalesce(total_current_assets, '0') as numeric), 2) as total_current_assets,
+           round(cast(coalesce(property_plant_equipment, '0') as numeric), 2) as property_plant_equipment,
+           round(cast(coalesce(long_term_investments_receivables, '0') as numeric), 2) as long_term_investments_receivables,
+           round(cast(coalesce(other_long_term_assets, '0') as numeric), 2) as other_long_term_assets,
+           round(cast(coalesce(total_noncurrent_assets, '0') as numeric), 2) as total_noncurrent_assets,
+           round(cast(coalesce(total_assets, '0') as numeric), 2) as total_assets,
+           round(cast(coalesce(payables_accruals, '0') as numeric), 2) as payables_accruals,
+           round(cast(coalesce(short_term_debt, '0') as numeric), 2) as short_term_debt,
+           round(cast(coalesce(total_current_liabilities, '0') as numeric), 2) as total_current_liabilities,
+           round(cast(coalesce(long_term_debt, '0') as numeric), 2) as long_term_debt,
+           round(cast(coalesce(total_noncurrent_liabilities, '0') as numeric), 2) as total_noncurrent_liabilities,
+           round(cast(coalesce(total_liabilities, '0') as numeric), 2) as total_liabilities,
+           round(cast(coalesce(share_capital_additional_paid_in_capital, '0') as numeric), 2) as share_capital_additional_paid_in_capital,
+           round(cast(coalesce(treasury_stock, '0') as numeric), 2) as treasury_stock,
+           round(cast(coalesce(retained_earnings, '0') as numeric), 2) as retained_earnings,
+           round(cast(coalesce(total_equity, '0') as numeric), 2) as total_equity,
+           round(cast(coalesce(total_liabilities_equity, '0') as numeric), 2) as total_liabilities_equity
+    from staging.balance_sheet_us_general_quarterly
+    where ticker in (select ticker from company);
+
+    insert into balance_sheet_general (company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date, restated_date,
+                                       shares_basic, shares_diluted, cash_cash_equivalents_short_term_investments, accounts_notes_receivable, inventories,
+                                       total_current_assets, property_plant_equipment_net, long_term_investments_receivables, other_long_term_assets,
+                                       total_noncurrent_assets, total_assets, payables_accruals, short_term_debt, total_current_liabilities, long_term_debt,
+                                       total_noncurrent_liabilities, total_liabilities, share_capital_additional_paid_in_capital, treasury_stock, retained_earnings,
+                                       total_equity, total_liabilities_equity)
+    select staging.fn_company_id(ticker) as company_id,
+           staging.fn_currency_id(currency) as currency_id,
+           staging.fn_accounting_period_id('TTM') as accounting_period_id,
+           fiscal_year::integer,
+           fiscal_period,
+           to_date(report_date, 'YYYY-MM-DD') as report_date,
+           to_date(publish_date, 'YYYY-MM-DD') as publish_date,
+           to_date(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic::BIGINT,
+           shares_diluted::BIGINT,
+           round(cast(coalesce(cash_cash_equivalents_short_term_investments, '0') as numeric), 2) as cash_cash_equivalents_short_term_investments,
+           round(cast(coalesce(accounts_notes_receivable, '0') as numeric), 2) as accounts_notes_receivable,
+           round(cast(coalesce(inventories, '0') as numeric), 2) as inventories,
+           round(cast(coalesce(total_current_assets, '0') as numeric), 2) as total_current_assets,
+           round(cast(coalesce(property_plant_equipment, '0') as numeric), 2) as property_plant_equipment,
+           round(cast(coalesce(long_term_investments_receivables, '0') as numeric), 2) as long_term_investments_receivables,
+           round(cast(coalesce(other_long_term_assets, '0') as numeric), 2) as other_long_term_assets,
+           round(cast(coalesce(total_noncurrent_assets, '0') as numeric), 2) as total_noncurrent_assets,
+           round(cast(coalesce(total_assets, '0') as numeric), 2) as total_assets,
+           round(cast(coalesce(payables_accruals, '0') as numeric), 2) as payables_accruals,
+           round(cast(coalesce(short_term_debt, '0') as numeric), 2) as short_term_debt,
+           round(cast(coalesce(total_current_liabilities, '0') as numeric), 2) as total_current_liabilities,
+           round(cast(coalesce(long_term_debt, '0') as numeric), 2) as long_term_debt,
+           round(cast(coalesce(total_noncurrent_liabilities, '0') as numeric), 2) as total_noncurrent_liabilities,
+           round(cast(coalesce(total_liabilities, '0') as numeric), 2) as total_liabilities,
+           round(cast(coalesce(share_capital_additional_paid_in_capital, '0') as numeric), 2) as share_capital_additional_paid_in_capital,
+           round(cast(coalesce(treasury_stock, '0') as numeric), 2) as treasury_stock,
+           round(cast(coalesce(retained_earnings, '0') as numeric), 2) as retained_earnings,
+           round(cast(coalesce(total_equity, '0') as numeric), 2) as total_equity,
+           round(cast(coalesce(total_liabilities_equity, '0') as numeric), 2) as total_liabilities_equity
+    from staging.balance_sheet_us_general_ttm
+    where ticker in (select ticker from company);
+
+    -- endregion USA
+
+    -- region Germany
+
+    insert into balance_sheet_general (company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date, restated_date,
+                                       shares_basic, shares_diluted, cash_cash_equivalents_short_term_investments, accounts_notes_receivable, inventories,
+                                       total_current_assets, property_plant_equipment_net, long_term_investments_receivables, other_long_term_assets,
+                                       total_noncurrent_assets, total_assets, payables_accruals, short_term_debt, total_current_liabilities, long_term_debt,
+                                       total_noncurrent_liabilities, total_liabilities, share_capital_additional_paid_in_capital, treasury_stock, retained_earnings,
+                                       total_equity, total_liabilities_equity)
+    select staging.fn_company_id(ticker) as company_id,
+           staging.fn_currency_id(currency) as currency_id,
+           staging.fn_accounting_period_id('Annual') as accounting_period_id,
+           fiscal_year::integer,
+           fiscal_period,
+           to_date(report_date, 'YYYY-MM-DD') as report_date,
+           to_date(publish_date, 'YYYY-MM-DD') as publish_date,
+           to_date(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic::BIGINT,
+           shares_diluted::BIGINT,
+           round(cast(coalesce(cash_cash_equivalents_short_term_investments, '0') as numeric), 2) as cash_cash_equivalents_short_term_investments,
+           round(cast(coalesce(accounts_notes_receivable, '0') as numeric), 2) as accounts_notes_receivable,
+           round(cast(coalesce(inventories, '0') as numeric), 2) as inventories,
+           round(cast(coalesce(total_current_assets, '0') as numeric), 2) as total_current_assets,
+           round(cast(coalesce(property_plant_equipment, '0') as numeric), 2) as property_plant_equipment,
+           round(cast(coalesce(long_term_investments_receivables, '0') as numeric), 2) as long_term_investments_receivables,
+           round(cast(coalesce(other_long_term_assets, '0') as numeric), 2) as other_long_term_assets,
+           round(cast(coalesce(total_noncurrent_assets, '0') as numeric), 2) as total_noncurrent_assets,
+           round(cast(coalesce(total_assets, '0') as numeric), 2) as total_assets,
+           round(cast(coalesce(payables_accruals, '0') as numeric), 2) as payables_accruals,
+           round(cast(coalesce(short_term_debt, '0') as numeric), 2) as short_term_debt,
+           round(cast(coalesce(total_current_liabilities, '0') as numeric), 2) as total_current_liabilities,
+           round(cast(coalesce(long_term_debt, '0') as numeric), 2) as long_term_debt,
+           round(cast(coalesce(total_noncurrent_liabilities, '0') as numeric), 2) as total_noncurrent_liabilities,
+           round(cast(coalesce(total_liabilities, '0') as numeric), 2) as total_liabilities,
+           round(cast(coalesce(share_capital_additional_paid_in_capital, '0') as numeric), 2) as share_capital_additional_paid_in_capital,
+           round(cast(coalesce(treasury_stock, '0') as numeric), 2) as treasury_stock,
+           round(cast(coalesce(retained_earnings, '0') as numeric), 2) as retained_earnings,
+           round(cast(coalesce(total_equity, '0') as numeric), 2) as total_equity,
+           round(cast(coalesce(total_liabilities_equity, '0') as numeric), 2) as total_liabilities_equity
+    from staging.balance_sheet_de_general_annual
+    where ticker in (select ticker from company);
+
+    insert into balance_sheet_general (company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date, restated_date,
+                                       shares_basic, shares_diluted, cash_cash_equivalents_short_term_investments, accounts_notes_receivable, inventories,
+                                       total_current_assets, property_plant_equipment_net, long_term_investments_receivables, other_long_term_assets,
+                                       total_noncurrent_assets, total_assets, payables_accruals, short_term_debt, total_current_liabilities, long_term_debt,
+                                       total_noncurrent_liabilities, total_liabilities, share_capital_additional_paid_in_capital, treasury_stock, retained_earnings,
+                                       total_equity, total_liabilities_equity)
+    select staging.fn_company_id(ticker) as company_id,
+           staging.fn_currency_id(currency) as currency_id,
+           staging.fn_accounting_period_id('Quarterly') as accounting_period_id,
+           fiscal_year::integer,
+           fiscal_period,
+           to_date(report_date, 'YYYY-MM-DD') as report_date,
+           to_date(publish_date, 'YYYY-MM-DD') as publish_date,
+           to_date(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic::BIGINT,
+           shares_diluted::BIGINT,
+           round(cast(coalesce(cash_cash_equivalents_short_term_investments, '0') as numeric), 2) as cash_cash_equivalents_short_term_investments,
+           round(cast(coalesce(accounts_notes_receivable, '0') as numeric), 2) as accounts_notes_receivable,
+           round(cast(coalesce(inventories, '0') as numeric), 2) as inventories,
+           round(cast(coalesce(total_current_assets, '0') as numeric), 2) as total_current_assets,
+           round(cast(coalesce(property_plant_equipment, '0') as numeric), 2) as property_plant_equipment,
+           round(cast(coalesce(long_term_investments_receivables, '0') as numeric), 2) as long_term_investments_receivables,
+           round(cast(coalesce(other_long_term_assets, '0') as numeric), 2) as other_long_term_assets,
+           round(cast(coalesce(total_noncurrent_assets, '0') as numeric), 2) as total_noncurrent_assets,
+           round(cast(coalesce(total_assets, '0') as numeric), 2) as total_assets,
+           round(cast(coalesce(payables_accruals, '0') as numeric), 2) as payables_accruals,
+           round(cast(coalesce(short_term_debt, '0') as numeric), 2) as short_term_debt,
+           round(cast(coalesce(total_current_liabilities, '0') as numeric), 2) as total_current_liabilities,
+           round(cast(coalesce(long_term_debt, '0') as numeric), 2) as long_term_debt,
+           round(cast(coalesce(total_noncurrent_liabilities, '0') as numeric), 2) as total_noncurrent_liabilities,
+           round(cast(coalesce(total_liabilities, '0') as numeric), 2) as total_liabilities,
+           round(cast(coalesce(share_capital_additional_paid_in_capital, '0') as numeric), 2) as share_capital_additional_paid_in_capital,
+           round(cast(coalesce(treasury_stock, '0') as numeric), 2) as treasury_stock,
+           round(cast(coalesce(retained_earnings, '0') as numeric), 2) as retained_earnings,
+           round(cast(coalesce(total_equity, '0') as numeric), 2) as total_equity,
+           round(cast(coalesce(total_liabilities_equity, '0') as numeric), 2) as total_liabilities_equity
+    from staging.balance_sheet_de_general_quarterly
+    where ticker in (select ticker from company);
+
+    insert into balance_sheet_general (company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date, restated_date,
+                                       shares_basic, shares_diluted, cash_cash_equivalents_short_term_investments, accounts_notes_receivable, inventories,
+                                       total_current_assets, property_plant_equipment_net, long_term_investments_receivables, other_long_term_assets,
+                                       total_noncurrent_assets, total_assets, payables_accruals, short_term_debt, total_current_liabilities, long_term_debt,
+                                       total_noncurrent_liabilities, total_liabilities, share_capital_additional_paid_in_capital, treasury_stock, retained_earnings,
+                                       total_equity, total_liabilities_equity)
+    select staging.fn_company_id(ticker) as company_id,
+           staging.fn_currency_id(currency) as currency_id,
+           staging.fn_accounting_period_id('TTM') as accounting_period_id,
+           fiscal_year::integer,
+           fiscal_period,
+           to_date(report_date, 'YYYY-MM-DD') as report_date,
+           to_date(publish_date, 'YYYY-MM-DD') as publish_date,
+           to_date(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic::BIGINT,
+           shares_diluted::BIGINT,
+           round(cast(coalesce(cash_cash_equivalents_short_term_investments, '0') as numeric), 2) as cash_cash_equivalents_short_term_investments,
+           round(cast(coalesce(accounts_notes_receivable, '0') as numeric), 2) as accounts_notes_receivable,
+           round(cast(coalesce(inventories, '0') as numeric), 2) as inventories,
+           round(cast(coalesce(total_current_assets, '0') as numeric), 2) as total_current_assets,
+           round(cast(coalesce(property_plant_equipment, '0') as numeric), 2) as property_plant_equipment,
+           round(cast(coalesce(long_term_investments_receivables, '0') as numeric), 2) as long_term_investments_receivables,
+           round(cast(coalesce(other_long_term_assets, '0') as numeric), 2) as other_long_term_assets,
+           round(cast(coalesce(total_noncurrent_assets, '0') as numeric), 2) as total_noncurrent_assets,
+           round(cast(coalesce(total_assets, '0') as numeric), 2) as total_assets,
+           round(cast(coalesce(payables_accruals, '0') as numeric), 2) as payables_accruals,
+           round(cast(coalesce(short_term_debt, '0') as numeric), 2) as short_term_debt,
+           round(cast(coalesce(total_current_liabilities, '0') as numeric), 2) as total_current_liabilities,
+           round(cast(coalesce(long_term_debt, '0') as numeric), 2) as long_term_debt,
+           round(cast(coalesce(total_noncurrent_liabilities, '0') as numeric), 2) as total_noncurrent_liabilities,
+           round(cast(coalesce(total_liabilities, '0') as numeric), 2) as total_liabilities,
+           round(cast(coalesce(share_capital_additional_paid_in_capital, '0') as numeric), 2) as share_capital_additional_paid_in_capital,
+           round(cast(coalesce(treasury_stock, '0') as numeric), 2) as treasury_stock,
+           round(cast(coalesce(retained_earnings, '0') as numeric), 2) as retained_earnings,
+           round(cast(coalesce(total_equity, '0') as numeric), 2) as total_equity,
+           round(cast(coalesce(total_liabilities_equity, '0') as numeric), 2) as total_liabilities_equity
+    from staging.balance_sheet_de_general_ttm
+    where ticker in (select ticker from company);
+
+    -- endregion Germany
+
+    -- region China
+
+    insert into balance_sheet_general (company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date, restated_date,
+                                       shares_basic, shares_diluted, cash_cash_equivalents_short_term_investments, accounts_notes_receivable, inventories,
+                                       total_current_assets, property_plant_equipment_net, long_term_investments_receivables, other_long_term_assets,
+                                       total_noncurrent_assets, total_assets, payables_accruals, short_term_debt, total_current_liabilities, long_term_debt,
+                                       total_noncurrent_liabilities, total_liabilities, share_capital_additional_paid_in_capital, treasury_stock, retained_earnings,
+                                       total_equity, total_liabilities_equity)
+    select staging.fn_company_id(ticker) as company_id,
+           staging.fn_currency_id(currency) as currency_id,
+           staging.fn_accounting_period_id('Annual') as accounting_period_id,
+           fiscal_year::integer,
+           fiscal_period,
+           to_date(report_date, 'YYYY-MM-DD') as report_date,
+           to_date(publish_date, 'YYYY-MM-DD') as publish_date,
+           to_date(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic::BIGINT,
+           shares_diluted::BIGINT,
+           round(cast(coalesce(cash_cash_equivalents_short_term_investments, '0') as numeric), 2) as cash_cash_equivalents_short_term_investments,
+           round(cast(coalesce(accounts_notes_receivable, '0') as numeric), 2) as accounts_notes_receivable,
+           round(cast(coalesce(inventories, '0') as numeric), 2) as inventories,
+           round(cast(coalesce(total_current_assets, '0') as numeric), 2) as total_current_assets,
+           round(cast(coalesce(property_plant_equipment, '0') as numeric), 2) as property_plant_equipment,
+           round(cast(coalesce(long_term_investments_receivables, '0') as numeric), 2) as long_term_investments_receivables,
+           round(cast(coalesce(other_long_term_assets, '0') as numeric), 2) as other_long_term_assets,
+           round(cast(coalesce(total_noncurrent_assets, '0') as numeric), 2) as total_noncurrent_assets,
+           round(cast(coalesce(total_assets, '0') as numeric), 2) as total_assets,
+           round(cast(coalesce(payables_accruals, '0') as numeric), 2) as payables_accruals,
+           round(cast(coalesce(short_term_debt, '0') as numeric), 2) as short_term_debt,
+           round(cast(coalesce(total_current_liabilities, '0') as numeric), 2) as total_current_liabilities,
+           round(cast(coalesce(long_term_debt, '0') as numeric), 2) as long_term_debt,
+           round(cast(coalesce(total_noncurrent_liabilities, '0') as numeric), 2) as total_noncurrent_liabilities,
+           round(cast(coalesce(total_liabilities, '0') as numeric), 2) as total_liabilities,
+           round(cast(coalesce(share_capital_additional_paid_in_capital, '0') as numeric), 2) as share_capital_additional_paid_in_capital,
+           round(cast(coalesce(treasury_stock, '0') as numeric), 2) as treasury_stock,
+           round(cast(coalesce(retained_earnings, '0') as numeric), 2) as retained_earnings,
+           round(cast(coalesce(total_equity, '0') as numeric), 2) as total_equity,
+           round(cast(coalesce(total_liabilities_equity, '0') as numeric), 2) as total_liabilities_equity
+    from staging.balance_sheet_cn_general_annual
+    where ticker in (select ticker from company);
+
+    insert into balance_sheet_general (company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date, restated_date,
+                                       shares_basic, shares_diluted, cash_cash_equivalents_short_term_investments, accounts_notes_receivable, inventories,
+                                       total_current_assets, property_plant_equipment_net, long_term_investments_receivables, other_long_term_assets,
+                                       total_noncurrent_assets, total_assets, payables_accruals, short_term_debt, total_current_liabilities, long_term_debt,
+                                       total_noncurrent_liabilities, total_liabilities, share_capital_additional_paid_in_capital, treasury_stock, retained_earnings,
+                                       total_equity, total_liabilities_equity)
+    select staging.fn_company_id(ticker) as company_id,
+           staging.fn_currency_id(currency) as currency_id,
+           staging.fn_accounting_period_id('Quarterly') as accounting_period_id,
+           fiscal_year::integer,
+           fiscal_period,
+           to_date(report_date, 'YYYY-MM-DD') as report_date,
+           to_date(publish_date, 'YYYY-MM-DD') as publish_date,
+           to_date(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic::BIGINT,
+           shares_diluted::BIGINT,
+           round(cast(coalesce(cash_cash_equivalents_short_term_investments, '0') as numeric), 2) as cash_cash_equivalents_short_term_investments,
+           round(cast(coalesce(accounts_notes_receivable, '0') as numeric), 2) as accounts_notes_receivable,
+           round(cast(coalesce(inventories, '0') as numeric), 2) as inventories,
+           round(cast(coalesce(total_current_assets, '0') as numeric), 2) as total_current_assets,
+           round(cast(coalesce(property_plant_equipment, '0') as numeric), 2) as property_plant_equipment,
+           round(cast(coalesce(long_term_investments_receivables, '0') as numeric), 2) as long_term_investments_receivables,
+           round(cast(coalesce(other_long_term_assets, '0') as numeric), 2) as other_long_term_assets,
+           round(cast(coalesce(total_noncurrent_assets, '0') as numeric), 2) as total_noncurrent_assets,
+           round(cast(coalesce(total_assets, '0') as numeric), 2) as total_assets,
+           round(cast(coalesce(payables_accruals, '0') as numeric), 2) as payables_accruals,
+           round(cast(coalesce(short_term_debt, '0') as numeric), 2) as short_term_debt,
+           round(cast(coalesce(total_current_liabilities, '0') as numeric), 2) as total_current_liabilities,
+           round(cast(coalesce(long_term_debt, '0') as numeric), 2) as long_term_debt,
+           round(cast(coalesce(total_noncurrent_liabilities, '0') as numeric), 2) as total_noncurrent_liabilities,
+           round(cast(coalesce(total_liabilities, '0') as numeric), 2) as total_liabilities,
+           round(cast(coalesce(share_capital_additional_paid_in_capital, '0') as numeric), 2) as share_capital_additional_paid_in_capital,
+           round(cast(coalesce(treasury_stock, '0') as numeric), 2) as treasury_stock,
+           round(cast(coalesce(retained_earnings, '0') as numeric), 2) as retained_earnings,
+           round(cast(coalesce(total_equity, '0') as numeric), 2) as total_equity,
+           round(cast(coalesce(total_liabilities_equity, '0') as numeric), 2) as total_liabilities_equity
+    from staging.balance_sheet_cn_general_quarterly
+    where ticker in (select ticker from company);
+
+    insert into balance_sheet_general (company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date, restated_date,
+                                       shares_basic, shares_diluted, cash_cash_equivalents_short_term_investments, accounts_notes_receivable, inventories,
+                                       total_current_assets, property_plant_equipment_net, long_term_investments_receivables, other_long_term_assets,
+                                       total_noncurrent_assets, total_assets, payables_accruals, short_term_debt, total_current_liabilities, long_term_debt,
+                                       total_noncurrent_liabilities, total_liabilities, share_capital_additional_paid_in_capital, treasury_stock, retained_earnings,
+                                       total_equity, total_liabilities_equity)
+    select staging.fn_company_id(ticker) as company_id,
+           staging.fn_currency_id(currency) as currency_id,
+           staging.fn_accounting_period_id('TTM') as accounting_period_id,
+           fiscal_year::integer,
+           fiscal_period,
+           to_date(report_date, 'YYYY-MM-DD') as report_date,
+           to_date(publish_date, 'YYYY-MM-DD') as publish_date,
+           to_date(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic::BIGINT,
+           shares_diluted::BIGINT,
+           round(cast(coalesce(cash_cash_equivalents_short_term_investments, '0') as numeric), 2) as cash_cash_equivalents_short_term_investments,
+           round(cast(coalesce(accounts_notes_receivable, '0') as numeric), 2) as accounts_notes_receivable,
+           round(cast(coalesce(inventories, '0') as numeric), 2) as inventories,
+           round(cast(coalesce(total_current_assets, '0') as numeric), 2) as total_current_assets,
+           round(cast(coalesce(property_plant_equipment, '0') as numeric), 2) as property_plant_equipment,
+           round(cast(coalesce(long_term_investments_receivables, '0') as numeric), 2) as long_term_investments_receivables,
+           round(cast(coalesce(other_long_term_assets, '0') as numeric), 2) as other_long_term_assets,
+           round(cast(coalesce(total_noncurrent_assets, '0') as numeric), 2) as total_noncurrent_assets,
+           round(cast(coalesce(total_assets, '0') as numeric), 2) as total_assets,
+           round(cast(coalesce(payables_accruals, '0') as numeric), 2) as payables_accruals,
+           round(cast(coalesce(short_term_debt, '0') as numeric), 2) as short_term_debt,
+           round(cast(coalesce(total_current_liabilities, '0') as numeric), 2) as total_current_liabilities,
+           round(cast(coalesce(long_term_debt, '0') as numeric), 2) as long_term_debt,
+           round(cast(coalesce(total_noncurrent_liabilities, '0') as numeric), 2) as total_noncurrent_liabilities,
+           round(cast(coalesce(total_liabilities, '0') as numeric), 2) as total_liabilities,
+           round(cast(coalesce(share_capital_additional_paid_in_capital, '0') as numeric), 2) as share_capital_additional_paid_in_capital,
+           round(cast(coalesce(treasury_stock, '0') as numeric), 2) as treasury_stock,
+           round(cast(coalesce(retained_earnings, '0') as numeric), 2) as retained_earnings,
+           round(cast(coalesce(total_equity, '0') as numeric), 2) as total_equity,
+           round(cast(coalesce(total_liabilities_equity, '0') as numeric), 2) as total_liabilities_equity
+    from staging.balance_sheet_cn_general_ttm
+    where ticker in (select ticker from company);
+
+    -- endregion China
+end
+$procedurebody$ language plpgsql;
+
+create or replace procedure staging.sp_build_balance_sheet_bank_table()
+as
+$procedurebody$
+begin
+    truncate table public.balance_sheet_bank restart identity;
+
+    -- region USA
+
+    insert into public.balance_sheet_bank (company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date, restated_date, shares_basic, shares_diluted, cash_cash_equivalents_short_term_investments, interbank_assets, short_long_term_investments, accounts_notes_receivable, net_loans, net_fixed_assets, total_assets, total_deposits, short_term_debt, long_term_debt, total_liabilities, preferred_equity, share_capital_additional_paid_in_capital, treasury_stock, retained_earnings, total_equity, total_liabilities_equity)
+    select staging.fn_company_id(ticker::varchar) as company_id,
+           staging.fn_currency_id(currency) as currency_id,
+           staging.fn_accounting_period_id('Annual') as accounting_period_id,
+           fiscal_year:: integer,
+           fiscal_period,
+           TO_DATE(report_date, 'YYYY-MM-DD') as report_date,
+           TO_DATE(publish_date, 'YYYY-MM-DD') as publish_date,
+           TO_DATE(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic:: bigint,
+           shares_diluted:: bigint,
+           round(cast(coalesce(cash_cash_equivalents_short_term_investments, '0') as numeric), 2) as cash_cash_equivalents_short_term_investments,
+           round(cast(coalesce(interbank_assets, '0') as numeric), 2) as interbank_assets,
+           round(cast(coalesce(short_long_term_investments, '0') as numeric), 2) as short_long_term_investments,
+           round(cast(coalesce(accounts_notes_receivable, '0') as numeric), 2) as accounts_notes_receivable,
+           round(cast(coalesce(net_loans, '0') as numeric), 2) as net_loans,
+           round(cast(coalesce(net_fixed_assets, '0') as numeric), 2) as net_fixed_assets,
+           round(cast(coalesce(total_assets, '0') as numeric), 2) as total_assets,
+           round(cast(coalesce(total_deposits, '0') as numeric), 2) as total_deposits,
+           round(cast(coalesce(short_term_debt, '0') as numeric), 2) as short_term_debt,
+           round(cast(coalesce(long_term_debt, '0') as numeric), 2) as long_term_debt,
+           round(cast(coalesce(total_liabilities, '0') as numeric), 2) as total_liabilities,
+           round(cast(coalesce(preferred_equity, '0') as numeric), 2) as preferred_equity,
+           round(cast(coalesce(share_capital_additional_paid_in_capital, '0') as numeric), 2) as share_capital_additional_paid_in_capital,
+           round(cast(coalesce(treasury_stock, '0') as numeric), 2) as treasury_stock,
+           round(cast(coalesce(retained_earnings, '0') as numeric), 2) as retained_earnings,
+           round(cast(coalesce(total_equity, '0') as numeric), 2) as total_equity,
+           round(cast(coalesce(total_liabilities_equity, '0') as numeric), 2) as total_liabilities_equity
+    from staging.balance_sheet_us_bank_annual
+    where ticker in (select ticker from company);
+
+    insert into public.balance_sheet_bank (company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date, restated_date, shares_basic, shares_diluted, cash_cash_equivalents_short_term_investments, interbank_assets, short_long_term_investments, accounts_notes_receivable, net_loans, net_fixed_assets, total_assets, total_deposits, short_term_debt, long_term_debt, total_liabilities, preferred_equity, share_capital_additional_paid_in_capital, treasury_stock, retained_earnings, total_equity, total_liabilities_equity)
+    select staging.fn_company_id(ticker::varchar) as company_id,
+           staging.fn_currency_id(currency) as currency_id,
+           staging.fn_accounting_period_id('Quarterly') as accounting_period_id,
+           fiscal_year:: integer,
+           fiscal_period,
+           TO_DATE(report_date, 'YYYY-MM-DD') as report_date,
+           TO_DATE(publish_date, 'YYYY-MM-DD') as publish_date,
+           TO_DATE(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic:: bigint,
+           shares_diluted:: bigint,
+           round(cast(coalesce(cash_cash_equivalents_short_term_investments, '0') as numeric), 2) as cash_cash_equivalents_short_term_investments,
+           round(cast(coalesce(interbank_assets, '0') as numeric), 2) as interbank_assets,
+           round(cast(coalesce(short_long_term_investments, '0') as numeric), 2) as short_long_term_investments,
+           round(cast(coalesce(accounts_notes_receivable, '0') as numeric), 2) as accounts_notes_receivable,
+           round(cast(coalesce(net_loans, '0') as numeric), 2) as net_loans,
+           round(cast(coalesce(net_fixed_assets, '0') as numeric), 2) as net_fixed_assets,
+           round(cast(coalesce(total_assets, '0') as numeric), 2) as total_assets,
+           round(cast(coalesce(total_deposits, '0') as numeric), 2) as total_deposits,
+           round(cast(coalesce(short_term_debt, '0') as numeric), 2) as short_term_debt,
+           round(cast(coalesce(long_term_debt, '0') as numeric), 2) as long_term_debt,
+           round(cast(coalesce(total_liabilities, '0') as numeric), 2) as total_liabilities,
+           round(cast(coalesce(preferred_equity, '0') as numeric), 2) as preferred_equity,
+           round(cast(coalesce(share_capital_additional_paid_in_capital, '0') as numeric), 2) as share_capital_additional_paid_in_capital,
+           round(cast(coalesce(treasury_stock, '0') as numeric), 2) as treasury_stock,
+           round(cast(coalesce(retained_earnings, '0') as numeric), 2) as retained_earnings,
+           round(cast(coalesce(total_equity, '0') as numeric), 2) as total_equity,
+           round(cast(coalesce(total_liabilities_equity, '0') as numeric), 2) as total_liabilities_equity
+    from staging.balance_sheet_us_bank_quarterly
+    where ticker in (select ticker from company);
+
+    insert into public.balance_sheet_bank (company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date, restated_date, shares_basic, shares_diluted, cash_cash_equivalents_short_term_investments, interbank_assets, short_long_term_investments, accounts_notes_receivable, net_loans, net_fixed_assets, total_assets, total_deposits, short_term_debt, long_term_debt, total_liabilities, preferred_equity, share_capital_additional_paid_in_capital, treasury_stock, retained_earnings, total_equity, total_liabilities_equity)
+    select staging.fn_company_id(ticker::varchar) as company_id,
+           staging.fn_currency_id(currency) as currency_id,
+           staging.fn_accounting_period_id('TTM') as accounting_period_id,
+           fiscal_year:: integer,
+           fiscal_period,
+           TO_DATE(report_date, 'YYYY-MM-DD') as report_date,
+           TO_DATE(publish_date, 'YYYY-MM-DD') as publish_date,
+           TO_DATE(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic:: bigint,
+           shares_diluted:: bigint,
+           round(cast(coalesce(cash_cash_equivalents_short_term_investments, '0') as numeric), 2) as cash_cash_equivalents_short_term_investments,
+           round(cast(coalesce(interbank_assets, '0') as numeric), 2) as interbank_assets,
+           round(cast(coalesce(short_long_term_investments, '0') as numeric), 2) as short_long_term_investments,
+           round(cast(coalesce(accounts_notes_receivable, '0') as numeric), 2) as accounts_notes_receivable,
+           round(cast(coalesce(net_loans, '0') as numeric), 2) as net_loans,
+           round(cast(coalesce(net_fixed_assets, '0') as numeric), 2) as net_fixed_assets,
+           round(cast(coalesce(total_assets, '0') as numeric), 2) as total_assets,
+           round(cast(coalesce(total_deposits, '0') as numeric), 2) as total_deposits,
+           round(cast(coalesce(short_term_debt, '0') as numeric), 2) as short_term_debt,
+           round(cast(coalesce(long_term_debt, '0') as numeric), 2) as long_term_debt,
+           round(cast(coalesce(total_liabilities, '0') as numeric), 2) as total_liabilities,
+           round(cast(coalesce(preferred_equity, '0') as numeric), 2) as preferred_equity,
+           round(cast(coalesce(share_capital_additional_paid_in_capital, '0') as numeric), 2) as share_capital_additional_paid_in_capital,
+           round(cast(coalesce(treasury_stock, '0') as numeric), 2) as treasury_stock,
+           round(cast(coalesce(retained_earnings, '0') as numeric), 2) as retained_earnings,
+           round(cast(coalesce(total_equity, '0') as numeric), 2) as total_equity,
+           round(cast(coalesce(total_liabilities_equity, '0') as numeric), 2) as total_liabilities_equity
+    from staging.balance_sheet_us_bank_ttm
+    where ticker in (select ticker from company);
+
+    -- endregion
+
+    -- region Germany
+
+    insert into public.balance_sheet_bank (company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date, restated_date, shares_basic, shares_diluted, cash_cash_equivalents_short_term_investments, interbank_assets, short_long_term_investments, accounts_notes_receivable, net_loans, net_fixed_assets, total_assets, total_deposits, short_term_debt, long_term_debt, total_liabilities, preferred_equity, share_capital_additional_paid_in_capital, treasury_stock, retained_earnings, total_equity, total_liabilities_equity)
+    select staging.fn_company_id(ticker::varchar) as company_id,
+           staging.fn_currency_id(currency) as currency_id,
+           staging.fn_accounting_period_id('Annual') as accounting_period_id,
+           fiscal_year:: integer,
+           fiscal_period,
+           TO_DATE(report_date, 'YYYY-MM-DD') as report_date,
+           TO_DATE(publish_date, 'YYYY-MM-DD') as publish_date,
+           TO_DATE(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic:: bigint,
+           shares_diluted:: bigint,
+           round(cast(coalesce(cash_cash_equivalents_short_term_investments, '0') as numeric), 2) as cash_cash_equivalents_short_term_investments,
+           round(cast(coalesce(interbank_assets, '0') as numeric), 2) as interbank_assets,
+           round(cast(coalesce(short_long_term_investments, '0') as numeric), 2) as short_long_term_investments,
+           round(cast(coalesce(accounts_notes_receivable, '0') as numeric), 2) as accounts_notes_receivable,
+           round(cast(coalesce(net_loans, '0') as numeric), 2) as net_loans,
+           round(cast(coalesce(net_fixed_assets, '0') as numeric), 2) as net_fixed_assets,
+           round(cast(coalesce(total_assets, '0') as numeric), 2) as total_assets,
+           round(cast(coalesce(total_deposits, '0') as numeric), 2) as total_deposits,
+           round(cast(coalesce(short_term_debt, '0') as numeric), 2) as short_term_debt,
+           round(cast(coalesce(long_term_debt, '0') as numeric), 2) as long_term_debt,
+           round(cast(coalesce(total_liabilities, '0') as numeric), 2) as total_liabilities,
+           round(cast(coalesce(preferred_equity, '0') as numeric), 2) as preferred_equity,
+           round(cast(coalesce(share_capital_additional_paid_in_capital, '0') as numeric), 2) as share_capital_additional_paid_in_capital,
+           round(cast(coalesce(treasury_stock, '0') as numeric), 2) as treasury_stock,
+           round(cast(coalesce(retained_earnings, '0') as numeric), 2) as retained_earnings,
+           round(cast(coalesce(total_equity, '0') as numeric), 2) as total_equity,
+           round(cast(coalesce(total_liabilities_equity, '0') as numeric), 2) as total_liabilities_equity
+    from staging.balance_sheet_de_bank_annual
+    where ticker in (select ticker from company);
+
+    insert into public.balance_sheet_bank (company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date, restated_date, shares_basic, shares_diluted, cash_cash_equivalents_short_term_investments, interbank_assets, short_long_term_investments, accounts_notes_receivable, net_loans, net_fixed_assets, total_assets, total_deposits, short_term_debt, long_term_debt, total_liabilities, preferred_equity, share_capital_additional_paid_in_capital, treasury_stock, retained_earnings, total_equity, total_liabilities_equity)
+    select staging.fn_company_id(ticker::varchar) as company_id,
+           staging.fn_currency_id(currency) as currency_id,
+           staging.fn_accounting_period_id('Quarterly') as accounting_period_id,
+           fiscal_year:: integer,
+           fiscal_period,
+           TO_DATE(report_date, 'YYYY-MM-DD') as report_date,
+           TO_DATE(publish_date, 'YYYY-MM-DD') as publish_date,
+           TO_DATE(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic:: bigint,
+           shares_diluted:: bigint,
+           round(cast(coalesce(cash_cash_equivalents_short_term_investments, '0') as numeric), 2) as cash_cash_equivalents_short_term_investments,
+           round(cast(coalesce(interbank_assets, '0') as numeric), 2) as interbank_assets,
+           round(cast(coalesce(short_long_term_investments, '0') as numeric), 2) as short_long_term_investments,
+           round(cast(coalesce(accounts_notes_receivable, '0') as numeric), 2) as accounts_notes_receivable,
+           round(cast(coalesce(net_loans, '0') as numeric), 2) as net_loans,
+           round(cast(coalesce(net_fixed_assets, '0') as numeric), 2) as net_fixed_assets,
+           round(cast(coalesce(total_assets, '0') as numeric), 2) as total_assets,
+           round(cast(coalesce(total_deposits, '0') as numeric), 2) as total_deposits,
+           round(cast(coalesce(short_term_debt, '0') as numeric), 2) as short_term_debt,
+           round(cast(coalesce(long_term_debt, '0') as numeric), 2) as long_term_debt,
+           round(cast(coalesce(total_liabilities, '0') as numeric), 2) as total_liabilities,
+           round(cast(coalesce(preferred_equity, '0') as numeric), 2) as preferred_equity,
+           round(cast(coalesce(share_capital_additional_paid_in_capital, '0') as numeric), 2) as share_capital_additional_paid_in_capital,
+           round(cast(coalesce(treasury_stock, '0') as numeric), 2) as treasury_stock,
+           round(cast(coalesce(retained_earnings, '0') as numeric), 2) as retained_earnings,
+           round(cast(coalesce(total_equity, '0') as numeric), 2) as total_equity,
+           round(cast(coalesce(total_liabilities_equity, '0') as numeric), 2) as total_liabilities_equity
+    from staging.balance_sheet_de_bank_quarterly
+    where ticker in (select ticker from company);
+
+    insert into public.balance_sheet_bank (company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date, restated_date, shares_basic, shares_diluted, cash_cash_equivalents_short_term_investments, interbank_assets, short_long_term_investments, accounts_notes_receivable, net_loans, net_fixed_assets, total_assets, total_deposits, short_term_debt, long_term_debt, total_liabilities, preferred_equity, share_capital_additional_paid_in_capital, treasury_stock, retained_earnings, total_equity, total_liabilities_equity)
+    select staging.fn_company_id(ticker::varchar) as company_id,
+           staging.fn_currency_id(currency) as currency_id,
+           staging.fn_accounting_period_id('TTM') as accounting_period_id,
+           fiscal_year:: integer,
+           fiscal_period,
+           TO_DATE(report_date, 'YYYY-MM-DD') as report_date,
+           TO_DATE(publish_date, 'YYYY-MM-DD') as publish_date,
+           TO_DATE(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic:: bigint,
+           shares_diluted:: bigint,
+           round(cast(coalesce(cash_cash_equivalents_short_term_investments, '0') as numeric), 2) as cash_cash_equivalents_short_term_investments,
+           round(cast(coalesce(interbank_assets, '0') as numeric), 2) as interbank_assets,
+           round(cast(coalesce(short_long_term_investments, '0') as numeric), 2) as short_long_term_investments,
+           round(cast(coalesce(accounts_notes_receivable, '0') as numeric), 2) as accounts_notes_receivable,
+           round(cast(coalesce(net_loans, '0') as numeric), 2) as net_loans,
+           round(cast(coalesce(net_fixed_assets, '0') as numeric), 2) as net_fixed_assets,
+           round(cast(coalesce(total_assets, '0') as numeric), 2) as total_assets,
+           round(cast(coalesce(total_deposits, '0') as numeric), 2) as total_deposits,
+           round(cast(coalesce(short_term_debt, '0') as numeric), 2) as short_term_debt,
+           round(cast(coalesce(long_term_debt, '0') as numeric), 2) as long_term_debt,
+           round(cast(coalesce(total_liabilities, '0') as numeric), 2) as total_liabilities,
+           round(cast(coalesce(preferred_equity, '0') as numeric), 2) as preferred_equity,
+           round(cast(coalesce(share_capital_additional_paid_in_capital, '0') as numeric), 2) as share_capital_additional_paid_in_capital,
+           round(cast(coalesce(treasury_stock, '0') as numeric), 2) as treasury_stock,
+           round(cast(coalesce(retained_earnings, '0') as numeric), 2) as retained_earnings,
+           round(cast(coalesce(total_equity, '0') as numeric), 2) as total_equity,
+           round(cast(coalesce(total_liabilities_equity, '0') as numeric), 2) as total_liabilities_equity
+    from staging.balance_sheet_de_bank_ttm
+    where ticker in (select ticker from company);
+
+    -- endregion Germany
+
+    -- region China
+
+    insert into public.balance_sheet_bank (company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date, restated_date, shares_basic, shares_diluted, cash_cash_equivalents_short_term_investments, interbank_assets, short_long_term_investments, accounts_notes_receivable, net_loans, net_fixed_assets, total_assets, total_deposits, short_term_debt, long_term_debt, total_liabilities, preferred_equity, share_capital_additional_paid_in_capital, treasury_stock, retained_earnings, total_equity, total_liabilities_equity)
+    select staging.fn_company_id(ticker::varchar) as company_id,
+           staging.fn_currency_id(currency) as currency_id,
+           staging.fn_accounting_period_id('Annual') as accounting_period_id,
+           fiscal_year:: integer,
+           fiscal_period,
+           TO_DATE(report_date, 'YYYY-MM-DD') as report_date,
+           TO_DATE(publish_date, 'YYYY-MM-DD') as publish_date,
+           TO_DATE(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic:: bigint,
+           shares_diluted:: bigint,
+           round(cast(coalesce(cash_cash_equivalents_short_term_investments, '0') as numeric), 2) as cash_cash_equivalents_short_term_investments,
+           round(cast(coalesce(interbank_assets, '0') as numeric), 2) as interbank_assets,
+           round(cast(coalesce(short_long_term_investments, '0') as numeric), 2) as short_long_term_investments,
+           round(cast(coalesce(accounts_notes_receivable, '0') as numeric), 2) as accounts_notes_receivable,
+           round(cast(coalesce(net_loans, '0') as numeric), 2) as net_loans,
+           round(cast(coalesce(net_fixed_assets, '0') as numeric), 2) as net_fixed_assets,
+           round(cast(coalesce(total_assets, '0') as numeric), 2) as total_assets,
+           round(cast(coalesce(total_deposits, '0') as numeric), 2) as total_deposits,
+           round(cast(coalesce(short_term_debt, '0') as numeric), 2) as short_term_debt,
+           round(cast(coalesce(long_term_debt, '0') as numeric), 2) as long_term_debt,
+           round(cast(coalesce(total_liabilities, '0') as numeric), 2) as total_liabilities,
+           round(cast(coalesce(preferred_equity, '0') as numeric), 2) as preferred_equity,
+           round(cast(coalesce(share_capital_additional_paid_in_capital, '0') as numeric), 2) as share_capital_additional_paid_in_capital,
+           round(cast(coalesce(treasury_stock, '0') as numeric), 2) as treasury_stock,
+           round(cast(coalesce(retained_earnings, '0') as numeric), 2) as retained_earnings,
+           round(cast(coalesce(total_equity, '0') as numeric), 2) as total_equity,
+           round(cast(coalesce(total_liabilities_equity, '0') as numeric), 2) as total_liabilities_equity
+    from staging.balance_sheet_cn_bank_annual
+    where ticker in (select ticker from company);
+
+    insert into public.balance_sheet_bank (company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date, restated_date, shares_basic, shares_diluted, cash_cash_equivalents_short_term_investments, interbank_assets, short_long_term_investments, accounts_notes_receivable, net_loans, net_fixed_assets, total_assets, total_deposits, short_term_debt, long_term_debt, total_liabilities, preferred_equity, share_capital_additional_paid_in_capital, treasury_stock, retained_earnings, total_equity, total_liabilities_equity)
+    select staging.fn_company_id(ticker::varchar) as company_id,
+           staging.fn_currency_id(currency) as currency_id,
+           staging.fn_accounting_period_id('Quarterly') as accounting_period_id,
+           fiscal_year:: integer,
+           fiscal_period,
+           TO_DATE(report_date, 'YYYY-MM-DD') as report_date,
+           TO_DATE(publish_date, 'YYYY-MM-DD') as publish_date,
+           TO_DATE(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic:: bigint,
+           shares_diluted:: bigint,
+           round(cast(coalesce(cash_cash_equivalents_short_term_investments, '0') as numeric), 2) as cash_cash_equivalents_short_term_investments,
+           round(cast(coalesce(interbank_assets, '0') as numeric), 2) as interbank_assets,
+           round(cast(coalesce(short_long_term_investments, '0') as numeric), 2) as short_long_term_investments,
+           round(cast(coalesce(accounts_notes_receivable, '0') as numeric), 2) as accounts_notes_receivable,
+           round(cast(coalesce(net_loans, '0') as numeric), 2) as net_loans,
+           round(cast(coalesce(net_fixed_assets, '0') as numeric), 2) as net_fixed_assets,
+           round(cast(coalesce(total_assets, '0') as numeric), 2) as total_assets,
+           round(cast(coalesce(total_deposits, '0') as numeric), 2) as total_deposits,
+           round(cast(coalesce(short_term_debt, '0') as numeric), 2) as short_term_debt,
+           round(cast(coalesce(long_term_debt, '0') as numeric), 2) as long_term_debt,
+           round(cast(coalesce(total_liabilities, '0') as numeric), 2) as total_liabilities,
+           round(cast(coalesce(preferred_equity, '0') as numeric), 2) as preferred_equity,
+           round(cast(coalesce(share_capital_additional_paid_in_capital, '0') as numeric), 2) as share_capital_additional_paid_in_capital,
+           round(cast(coalesce(treasury_stock, '0') as numeric), 2) as treasury_stock,
+           round(cast(coalesce(retained_earnings, '0') as numeric), 2) as retained_earnings,
+           round(cast(coalesce(total_equity, '0') as numeric), 2) as total_equity,
+           round(cast(coalesce(total_liabilities_equity, '0') as numeric), 2) as total_liabilities_equity
+    from staging.balance_sheet_cn_bank_quarterly
+    where ticker in (select ticker from company);
+
+    insert into public.balance_sheet_bank (company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date, restated_date, shares_basic, shares_diluted, cash_cash_equivalents_short_term_investments, interbank_assets, short_long_term_investments, accounts_notes_receivable, net_loans, net_fixed_assets, total_assets, total_deposits, short_term_debt, long_term_debt, total_liabilities, preferred_equity, share_capital_additional_paid_in_capital, treasury_stock, retained_earnings, total_equity, total_liabilities_equity)
+    select staging.fn_company_id(ticker::varchar) as company_id,
+           staging.fn_currency_id(currency) as currency_id,
+           staging.fn_accounting_period_id('TTM') as accounting_period_id,
+           fiscal_year:: integer,
+           fiscal_period,
+           TO_DATE(report_date, 'YYYY-MM-DD') as report_date,
+           TO_DATE(publish_date, 'YYYY-MM-DD') as publish_date,
+           TO_DATE(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic:: bigint,
+           shares_diluted:: bigint,
+           round(cast(coalesce(cash_cash_equivalents_short_term_investments, '0') as numeric), 2) as cash_cash_equivalents_short_term_investments,
+           round(cast(coalesce(interbank_assets, '0') as numeric), 2) as interbank_assets,
+           round(cast(coalesce(short_long_term_investments, '0') as numeric), 2) as short_long_term_investments,
+           round(cast(coalesce(accounts_notes_receivable, '0') as numeric), 2) as accounts_notes_receivable,
+           round(cast(coalesce(net_loans, '0') as numeric), 2) as net_loans,
+           round(cast(coalesce(net_fixed_assets, '0') as numeric), 2) as net_fixed_assets,
+           round(cast(coalesce(total_assets, '0') as numeric), 2) as total_assets,
+           round(cast(coalesce(total_deposits, '0') as numeric), 2) as total_deposits,
+           round(cast(coalesce(short_term_debt, '0') as numeric), 2) as short_term_debt,
+           round(cast(coalesce(long_term_debt, '0') as numeric), 2) as long_term_debt,
+           round(cast(coalesce(total_liabilities, '0') as numeric), 2) as total_liabilities,
+           round(cast(coalesce(preferred_equity, '0') as numeric), 2) as preferred_equity,
+           round(cast(coalesce(share_capital_additional_paid_in_capital, '0') as numeric), 2) as share_capital_additional_paid_in_capital,
+           round(cast(coalesce(treasury_stock, '0') as numeric), 2) as treasury_stock,
+           round(cast(coalesce(retained_earnings, '0') as numeric), 2) as retained_earnings,
+           round(cast(coalesce(total_equity, '0') as numeric), 2) as total_equity,
+           round(cast(coalesce(total_liabilities_equity, '0') as numeric), 2) as total_liabilities_equity
+    from staging.balance_sheet_cn_bank_ttm
+    where ticker in (select ticker from company);
+
+    -- endregion China
+end
+$procedurebody$ language plpgsql;
+
 -- endregion Build Stored Procedures
 
 -- region Seed Data

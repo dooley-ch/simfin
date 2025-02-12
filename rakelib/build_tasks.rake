@@ -14,7 +14,7 @@ require 'tty-spinner'
 
 namespace :build_tasks do # rubocop : disable Metrics/BlockLength
   task all: %i[reset_public_tables build_stock_market_table build_sector_table build_industry_table build_company_table
-               build_income_tables build_cashflow_tables]
+               build_income_tables build_cashflow_tables build_balance_sheet_tables]
 
   task :reset_public_tables do
     db_info = Config::Database.call(LOGGER)
@@ -139,6 +139,34 @@ namespace :build_tasks do # rubocop : disable Metrics/BlockLength
     DatabaseHelpers.execute_stored_procedure('sp_build_cashflow_insurance_table', db_info, LOGGER)
 
     LOGGER.info('Cashflow table (insurance) table built')
+
+    spinner.stop('Done')
+  end
+
+  task build_balance_sheet_tables: %i[build_balance_Sheet_table_general_table build_balance_Sheet_table_bank_table]
+
+  task :build_balance_Sheet_table_general_table do
+    spinner = TTY::Spinner.new('[:spinner] Building balance sheet table (general) ...', format: :shark)
+    spinner.auto_spin
+
+    db_info = Config::Database.call(LOGGER)
+
+    DatabaseHelpers.execute_stored_procedure('sp_build_balance_sheet_general_table', db_info, LOGGER)
+
+    LOGGER.info('Balance sheet table (general) table built')
+
+    spinner.stop('Done')
+  end
+
+  task :build_balance_Sheet_table_bank_table do
+    spinner = TTY::Spinner.new('[:spinner] Building balance sheet table (bank) ...', format: :shark)
+    spinner.auto_spin
+
+    db_info = Config::Database.call(LOGGER)
+
+    DatabaseHelpers.execute_stored_procedure('sp_build_balance_sheet_bank_table', db_info, LOGGER)
+
+    LOGGER.info('Balance sheet table (bank) table built')
 
     spinner.stop('Done')
   end
