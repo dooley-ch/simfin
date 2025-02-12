@@ -3710,10 +3710,12 @@ begin
         insert into staging.simfin_industry_map(simfin_industry_id, industry_id) values (current_record.industry_id, new_industry_id);
     end loop;
 
-    sector_id := staging.fn_sector_id('Unknown');
-    insert into public.industry(industry_name, sector_id) values ('Unknown', sector_id)
-        returning id into new_industry_id;
-    insert into staging.simfin_industry_map(simfin_industry_id, industry_id) values ('999999', new_industry_id);
+    if not exists (select * from staging.simfin_industry_map where simfin_industry_id = '999999') then
+        sector_id := staging.fn_sector_id('Unknown');
+        insert into public.industry(industry_name, sector_id) values ('Unknown', sector_id)
+            returning id into new_industry_id;
+        insert into staging.simfin_industry_map(simfin_industry_id, industry_id) values ('999999', new_industry_id);
+    end if;
 end;
 $procedure_body$ language plpgsql;
 
@@ -4680,6 +4682,994 @@ begin
     where ticker in (select ticker from public.company);
 
     -- endregion
+end
+$procedurebody$ language plpgsql;
+
+create or replace procedure staging.sp_build_cashflow_general_table()
+as
+$procedurebody$
+begin
+    truncate table public.cash_flow_general restart identity;
+
+    -- region USA
+    
+    insert into cash_flow_general (company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date,
+                                   restated_date, shares_basic, shares_diluted, net_income, depreciation_amortization, non_cash_item,
+                                   change_in_working_capital, change_in_accounts_receivable, change_in_inventories, change_in_accounts_payable,
+                                   change_in_other, met_cash_from_operating_activities, change_in_fixed_assets_intangibles,
+                                   net_change_in_long_term_investment, net_cash_from_acquisitions_divestitures, net_cash_from_investing_activities,
+                                   dividends_paid, cash_from_repayment_of_debt, cash_from_repurchase_of_equity, net_cash_from_financing_activities,
+                                   net_change_in_cash)
+    select staging.fn_company_id(ticker::varchar) AS company_id,
+           staging.fn_currency_id(currency) AS currency_id,
+           staging.fn_accounting_period_id('Annual') AS accounting_period_id,
+           fiscal_year::integer,
+           fiscal_period,
+           to_date(report_date, 'YYYY-MM-DD') as report_date,
+           to_date(publish_date, 'YYYY-MM-DD') as publish_date,
+           to_date(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic::bigint,
+           shares_diluted::bigint,
+           round(cast(coalesce(net_income_starting_line, '0') as numeric), 2) as net_income_starting_line,
+           round(cast(coalesce(depreciation_amortization, '0') as numeric), 2) as depreciation_amortization,
+           round(cast(coalesce(non_cash_items, '0') as numeric), 2) as non_cash_items,
+           round(cast(coalesce(change_in_working_capital, '0') as numeric), 2) as change_in_working_capital,
+           round(cast(coalesce(change_in_accounts_receivable, '0') as numeric), 2) as change_in_accounts_receivable,
+           round(cast(coalesce(change_in_inventories, '0') as numeric), 2) as change_in_inventories,
+           round(cast(coalesce(change_in_accounts_payable, '0') as numeric), 2) as change_in_accounts_payable,
+           round(cast(coalesce(change_in_other, '0') as numeric), 2) as change_in_other,
+           round(cast(coalesce(net_cash_from_operating_activities, '0') as numeric), 2) as net_cash_from_operating_activities,
+           round(cast(coalesce(change_in_fixed_assets_intangibles, '0') as numeric), 2) as change_in_fixed_assets_intangibles,
+           round(cast(coalesce(net_change_in_long_term_investment, '0') as numeric), 2) as net_change_in_long_term_investment,
+           round(cast(coalesce(net_cash_from_acquisitions_divestitures, '0') as numeric), 2) as net_cash_from_acquisitions_divestitures,
+           round(cast(coalesce(net_cash_from_investing_activities, '0') as numeric), 2) as net_cash_from_investing_activities,
+           round(cast(coalesce(dividends_paid, '0') as numeric), 2) as dividends_paid,
+           round(cast(coalesce(cash_from_repayment_of_debt, '0') as numeric), 2) as cash_from_repayment_of_debt,
+           round(cast(coalesce(cash_from_repurchase_of_equity, '0') as numeric), 2) as cash_from_repurchase_of_equity,
+           round(cast(coalesce(net_cash_from_financing_activities, '0') as numeric), 2) as net_cash_from_financing_activities,
+           round(cast(coalesce(net_change_in_cash, '0') as numeric), 2) as net_change_in_cash
+    from staging.cash_flow_us_general_annual
+    where ticker IN (select ticker from company);
+
+    insert into cash_flow_general (company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date,
+                                   restated_date, shares_basic, shares_diluted, net_income, depreciation_amortization, non_cash_item,
+                                   change_in_working_capital, change_in_accounts_receivable, change_in_inventories, change_in_accounts_payable,
+                                   change_in_other, met_cash_from_operating_activities, change_in_fixed_assets_intangibles,
+                                   net_change_in_long_term_investment, net_cash_from_acquisitions_divestitures, net_cash_from_investing_activities,
+                                   dividends_paid, cash_from_repayment_of_debt, cash_from_repurchase_of_equity, net_cash_from_financing_activities,
+                                   net_change_in_cash)
+    select staging.fn_company_id(ticker::varchar) AS company_id,
+           staging.fn_currency_id(currency) AS currency_id,
+           staging.fn_accounting_period_id('Quarterly') AS accounting_period_id,
+           fiscal_year::integer,
+           fiscal_period,
+           to_date(report_date, 'YYYY-MM-DD') as report_date,
+           to_date(publish_date, 'YYYY-MM-DD') as publish_date,
+           to_date(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic::bigint,
+           shares_diluted::bigint,
+           round(cast(coalesce(net_income_starting_line, '0') as numeric), 2) as net_income_starting_line,
+           round(cast(coalesce(depreciation_amortization, '0') as numeric), 2) as depreciation_amortization,
+           round(cast(coalesce(non_cash_items, '0') as numeric), 2) as non_cash_items,
+           round(cast(coalesce(change_in_working_capital, '0') as numeric), 2) as change_in_working_capital,
+           round(cast(coalesce(change_in_accounts_receivable, '0') as numeric), 2) as change_in_accounts_receivable,
+           round(cast(coalesce(change_in_inventories, '0') as numeric), 2) as change_in_inventories,
+           round(cast(coalesce(change_in_accounts_payable, '0') as numeric), 2) as change_in_accounts_payable,
+           round(cast(coalesce(change_in_other, '0') as numeric), 2) as change_in_other,
+           round(cast(coalesce(net_cash_from_operating_activities, '0') as numeric), 2) as net_cash_from_operating_activities,
+           round(cast(coalesce(change_in_fixed_assets_intangibles, '0') as numeric), 2) as change_in_fixed_assets_intangibles,
+           round(cast(coalesce(net_change_in_long_term_investment, '0') as numeric), 2) as net_change_in_long_term_investment,
+           round(cast(coalesce(net_cash_from_acquisitions_divestitures, '0') as numeric), 2) as net_cash_from_acquisitions_divestitures,
+           round(cast(coalesce(net_cash_from_investing_activities, '0') as numeric), 2) as net_cash_from_investing_activities,
+           round(cast(coalesce(dividends_paid, '0') as numeric), 2) as dividends_paid,
+           round(cast(coalesce(cash_from_repayment_of_debt, '0') as numeric), 2) as cash_from_repayment_of_debt,
+           round(cast(coalesce(cash_from_repurchase_of_equity, '0') as numeric), 2) as cash_from_repurchase_of_equity,
+           round(cast(coalesce(net_cash_from_financing_activities, '0') as numeric), 2) as net_cash_from_financing_activities,
+           round(cast(coalesce(net_change_in_cash, '0') as numeric), 2) as net_change_in_cash
+    from staging.cash_flow_us_general_quarterly
+    where ticker IN (select ticker from company);
+
+    insert into cash_flow_general (company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date,
+                                   restated_date, shares_basic, shares_diluted, net_income, depreciation_amortization, non_cash_item,
+                                   change_in_working_capital, change_in_accounts_receivable, change_in_inventories, change_in_accounts_payable,
+                                   change_in_other, met_cash_from_operating_activities, change_in_fixed_assets_intangibles,
+                                   net_change_in_long_term_investment, net_cash_from_acquisitions_divestitures, net_cash_from_investing_activities,
+                                   dividends_paid, cash_from_repayment_of_debt, cash_from_repurchase_of_equity, net_cash_from_financing_activities,
+                                   net_change_in_cash)
+    select staging.fn_company_id(ticker::varchar) AS company_id,
+           staging.fn_currency_id(currency) AS currency_id,
+           staging.fn_accounting_period_id('TTM') AS accounting_period_id,
+           fiscal_year::integer,
+           fiscal_period,
+           to_date(report_date, 'YYYY-MM-DD') as report_date,
+           to_date(publish_date, 'YYYY-MM-DD') as publish_date,
+           to_date(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic::bigint,
+           shares_diluted::bigint,
+           round(cast(coalesce(net_income_starting_line, '0') as numeric), 2) as net_income_starting_line,
+           round(cast(coalesce(depreciation_amortization, '0') as numeric), 2) as depreciation_amortization,
+           round(cast(coalesce(non_cash_items, '0') as numeric), 2) as non_cash_items,
+           round(cast(coalesce(change_in_working_capital, '0') as numeric), 2) as change_in_working_capital,
+           round(cast(coalesce(change_in_accounts_receivable, '0') as numeric), 2) as change_in_accounts_receivable,
+           round(cast(coalesce(change_in_inventories, '0') as numeric), 2) as change_in_inventories,
+           round(cast(coalesce(change_in_accounts_payable, '0') as numeric), 2) as change_in_accounts_payable,
+           round(cast(coalesce(change_in_other, '0') as numeric), 2) as change_in_other,
+           round(cast(coalesce(net_cash_from_operating_activities, '0') as numeric), 2) as net_cash_from_operating_activities,
+           round(cast(coalesce(change_in_fixed_assets_intangibles, '0') as numeric), 2) as change_in_fixed_assets_intangibles,
+           round(cast(coalesce(net_change_in_long_term_investment, '0') as numeric), 2) as net_change_in_long_term_investment,
+           round(cast(coalesce(net_cash_from_acquisitions_divestitures, '0') as numeric), 2) as net_cash_from_acquisitions_divestitures,
+           round(cast(coalesce(net_cash_from_investing_activities, '0') as numeric), 2) as net_cash_from_investing_activities,
+           round(cast(coalesce(dividends_paid, '0') as numeric), 2) as dividends_paid,
+           round(cast(coalesce(cash_from_repayment_of_debt, '0') as numeric), 2) as cash_from_repayment_of_debt,
+           round(cast(coalesce(cash_from_repurchase_of_equity, '0') as numeric), 2) as cash_from_repurchase_of_equity,
+           round(cast(coalesce(net_cash_from_financing_activities, '0') as numeric), 2) as net_cash_from_financing_activities,
+           round(cast(coalesce(net_change_in_cash, '0') as numeric), 2) as net_change_in_cash
+    from staging.cash_flow_us_general_ttm
+    where ticker IN (select ticker from company);
+
+    -- endregion USA
+
+    -- region Germany
+
+    insert into cash_flow_general (company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date,
+                                   restated_date, shares_basic, shares_diluted, net_income, depreciation_amortization, non_cash_item,
+                                   change_in_working_capital, change_in_accounts_receivable, change_in_inventories, change_in_accounts_payable,
+                                   change_in_other, met_cash_from_operating_activities, change_in_fixed_assets_intangibles,
+                                   net_change_in_long_term_investment, net_cash_from_acquisitions_divestitures, net_cash_from_investing_activities,
+                                   dividends_paid, cash_from_repayment_of_debt, cash_from_repurchase_of_equity, net_cash_from_financing_activities,
+                                   net_change_in_cash)
+    select staging.fn_company_id(ticker::varchar) AS company_id,
+           staging.fn_currency_id(currency) AS currency_id,
+           staging.fn_accounting_period_id('Annual') AS accounting_period_id,
+           fiscal_year::integer,
+           fiscal_period,
+           to_date(report_date, 'YYYY-MM-DD') as report_date,
+           to_date(publish_date, 'YYYY-MM-DD') as publish_date,
+           to_date(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic::bigint,
+           shares_diluted::bigint,
+           round(cast(coalesce(net_income_starting_line, '0') as numeric), 2) as net_income_starting_line,
+           round(cast(coalesce(depreciation_amortization, '0') as numeric), 2) as depreciation_amortization,
+           round(cast(coalesce(non_cash_items, '0') as numeric), 2) as non_cash_items,
+           round(cast(coalesce(change_in_working_capital, '0') as numeric), 2) as change_in_working_capital,
+           round(cast(coalesce(change_in_accounts_receivable, '0') as numeric), 2) as change_in_accounts_receivable,
+           round(cast(coalesce(change_in_inventories, '0') as numeric), 2) as change_in_inventories,
+           round(cast(coalesce(change_in_accounts_payable, '0') as numeric), 2) as change_in_accounts_payable,
+           round(cast(coalesce(change_in_other, '0') as numeric), 2) as change_in_other,
+           round(cast(coalesce(net_cash_from_operating_activities, '0') as numeric), 2) as net_cash_from_operating_activities,
+           round(cast(coalesce(change_in_fixed_assets_intangibles, '0') as numeric), 2) as change_in_fixed_assets_intangibles,
+           round(cast(coalesce(net_change_in_long_term_investment, '0') as numeric), 2) as net_change_in_long_term_investment,
+           round(cast(coalesce(net_cash_from_acquisitions_divestitures, '0') as numeric), 2) as net_cash_from_acquisitions_divestitures,
+           round(cast(coalesce(net_cash_from_investing_activities, '0') as numeric), 2) as net_cash_from_investing_activities,
+           round(cast(coalesce(dividends_paid, '0') as numeric), 2) as dividends_paid,
+           round(cast(coalesce(cash_from_repayment_of_debt, '0') as numeric), 2) as cash_from_repayment_of_debt,
+           round(cast(coalesce(cash_from_repurchase_of_equity, '0') as numeric), 2) as cash_from_repurchase_of_equity,
+           round(cast(coalesce(net_cash_from_financing_activities, '0') as numeric), 2) as net_cash_from_financing_activities,
+           round(cast(coalesce(net_change_in_cash, '0') as numeric), 2) as net_change_in_cash
+    from staging.cash_flow_de_general_annual
+    where ticker in (select ticker from company);
+
+    insert into cash_flow_general (company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date,
+                                   restated_date, shares_basic, shares_diluted, net_income, depreciation_amortization, non_cash_item,
+                                   change_in_working_capital, change_in_accounts_receivable, change_in_inventories, change_in_accounts_payable,
+                                   change_in_other, met_cash_from_operating_activities, change_in_fixed_assets_intangibles,
+                                   net_change_in_long_term_investment, net_cash_from_acquisitions_divestitures, net_cash_from_investing_activities,
+                                   dividends_paid, cash_from_repayment_of_debt, cash_from_repurchase_of_equity, net_cash_from_financing_activities,
+                                   net_change_in_cash)
+    select staging.fn_company_id(ticker::varchar) AS company_id,
+           staging.fn_currency_id(currency) AS currency_id,
+           staging.fn_accounting_period_id('Quarterly') AS accounting_period_id,
+           fiscal_year::integer,
+           fiscal_period,
+           to_date(report_date, 'YYYY-MM-DD') as report_date,
+           to_date(publish_date, 'YYYY-MM-DD') as publish_date,
+           to_date(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic::bigint,
+           shares_diluted::bigint,
+           round(cast(coalesce(net_income_starting_line, '0') as numeric), 2) as net_income_starting_line,
+           round(cast(coalesce(depreciation_amortization, '0') as numeric), 2) as depreciation_amortization,
+           round(cast(coalesce(non_cash_items, '0') as numeric), 2) as non_cash_items,
+           round(cast(coalesce(change_in_working_capital, '0') as numeric), 2) as change_in_working_capital,
+           round(cast(coalesce(change_in_accounts_receivable, '0') as numeric), 2) as change_in_accounts_receivable,
+           round(cast(coalesce(change_in_inventories, '0') as numeric), 2) as change_in_inventories,
+           round(cast(coalesce(change_in_accounts_payable, '0') as numeric), 2) as change_in_accounts_payable,
+           round(cast(coalesce(change_in_other, '0') as numeric), 2) as change_in_other,
+           round(cast(coalesce(net_cash_from_operating_activities, '0') as numeric), 2) as net_cash_from_operating_activities,
+           round(cast(coalesce(change_in_fixed_assets_intangibles, '0') as numeric), 2) as change_in_fixed_assets_intangibles,
+           round(cast(coalesce(net_change_in_long_term_investment, '0') as numeric), 2) as net_change_in_long_term_investment,
+           round(cast(coalesce(net_cash_from_acquisitions_divestitures, '0') as numeric), 2) as net_cash_from_acquisitions_divestitures,
+           round(cast(coalesce(net_cash_from_investing_activities, '0') as numeric), 2) as net_cash_from_investing_activities,
+           round(cast(coalesce(dividends_paid, '0') as numeric), 2) as dividends_paid,
+           round(cast(coalesce(cash_from_repayment_of_debt, '0') as numeric), 2) as cash_from_repayment_of_debt,
+           round(cast(coalesce(cash_from_repurchase_of_equity, '0') as numeric), 2) as cash_from_repurchase_of_equity,
+           round(cast(coalesce(net_cash_from_financing_activities, '0') as numeric), 2) as net_cash_from_financing_activities,
+           round(cast(coalesce(net_change_in_cash, '0') as numeric), 2) as net_change_in_cash
+    from staging.cash_flow_de_general_quarterly
+    where ticker IN (select ticker from company);
+
+    insert into cash_flow_general (company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date,
+                                   restated_date, shares_basic, shares_diluted, net_income, depreciation_amortization, non_cash_item,
+                                   change_in_working_capital, change_in_accounts_receivable, change_in_inventories, change_in_accounts_payable,
+                                   change_in_other, met_cash_from_operating_activities, change_in_fixed_assets_intangibles,
+                                   net_change_in_long_term_investment, net_cash_from_acquisitions_divestitures, net_cash_from_investing_activities,
+                                   dividends_paid, cash_from_repayment_of_debt, cash_from_repurchase_of_equity, net_cash_from_financing_activities,
+                                   net_change_in_cash)
+    select staging.fn_company_id(ticker::varchar) AS company_id,
+           staging.fn_currency_id(currency) AS currency_id,
+           staging.fn_accounting_period_id('TTM') AS accounting_period_id,
+           fiscal_year::integer,
+           fiscal_period,
+           to_date(report_date, 'YYYY-MM-DD') as report_date,
+           to_date(publish_date, 'YYYY-MM-DD') as publish_date,
+           to_date(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic::bigint,
+           shares_diluted::bigint,
+           round(cast(coalesce(net_income_starting_line, '0') as numeric), 2) as net_income_starting_line,
+           round(cast(coalesce(depreciation_amortization, '0') as numeric), 2) as depreciation_amortization,
+           round(cast(coalesce(non_cash_items, '0') as numeric), 2) as non_cash_items,
+           round(cast(coalesce(change_in_working_capital, '0') as numeric), 2) as change_in_working_capital,
+           round(cast(coalesce(change_in_accounts_receivable, '0') as numeric), 2) as change_in_accounts_receivable,
+           round(cast(coalesce(change_in_inventories, '0') as numeric), 2) as change_in_inventories,
+           round(cast(coalesce(change_in_accounts_payable, '0') as numeric), 2) as change_in_accounts_payable,
+           round(cast(coalesce(change_in_other, '0') as numeric), 2) as change_in_other,
+           round(cast(coalesce(net_cash_from_operating_activities, '0') as numeric), 2) as net_cash_from_operating_activities,
+           round(cast(coalesce(change_in_fixed_assets_intangibles, '0') as numeric), 2) as change_in_fixed_assets_intangibles,
+           round(cast(coalesce(net_change_in_long_term_investment, '0') as numeric), 2) as net_change_in_long_term_investment,
+           round(cast(coalesce(net_cash_from_acquisitions_divestitures, '0') as numeric), 2) as net_cash_from_acquisitions_divestitures,
+           round(cast(coalesce(net_cash_from_investing_activities, '0') as numeric), 2) as net_cash_from_investing_activities,
+           round(cast(coalesce(dividends_paid, '0') as numeric), 2) as dividends_paid,
+           round(cast(coalesce(cash_from_repayment_of_debt, '0') as numeric), 2) as cash_from_repayment_of_debt,
+           round(cast(coalesce(cash_from_repurchase_of_equity, '0') as numeric), 2) as cash_from_repurchase_of_equity,
+           round(cast(coalesce(net_cash_from_financing_activities, '0') as numeric), 2) as net_cash_from_financing_activities,
+           round(cast(coalesce(net_change_in_cash, '0') as numeric), 2) as net_change_in_cash
+    from staging.cash_flow_de_general_ttm
+    where ticker IN (select ticker from company);
+
+    -- endregion Germany
+
+    -- region China
+
+    insert into cash_flow_general (company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date,
+                                   restated_date, shares_basic, shares_diluted, net_income, depreciation_amortization, non_cash_item,
+                                   change_in_working_capital, change_in_accounts_receivable, change_in_inventories, change_in_accounts_payable,
+                                   change_in_other, met_cash_from_operating_activities, change_in_fixed_assets_intangibles,
+                                   net_change_in_long_term_investment, net_cash_from_acquisitions_divestitures, net_cash_from_investing_activities,
+                                   dividends_paid, cash_from_repayment_of_debt, cash_from_repurchase_of_equity, net_cash_from_financing_activities,
+                                   net_change_in_cash)
+    select staging.fn_company_id(ticker::varchar) AS company_id,
+           staging.fn_currency_id(currency) AS currency_id,
+           staging.fn_accounting_period_id('Annual') AS accounting_period_id,
+           fiscal_year::integer,
+           fiscal_period,
+           to_date(report_date, 'YYYY-MM-DD') as report_date,
+           to_date(publish_date, 'YYYY-MM-DD') as publish_date,
+           to_date(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic::bigint,
+           shares_diluted::bigint,
+           round(cast(coalesce(net_income_starting_line, '0') as numeric), 2) as net_income_starting_line,
+           round(cast(coalesce(depreciation_amortization, '0') as numeric), 2) as depreciation_amortization,
+           round(cast(coalesce(non_cash_items, '0') as numeric), 2) as non_cash_items,
+           round(cast(coalesce(change_in_working_capital, '0') as numeric), 2) as change_in_working_capital,
+           round(cast(coalesce(change_in_accounts_receivable, '0') as numeric), 2) as change_in_accounts_receivable,
+           round(cast(coalesce(change_in_inventories, '0') as numeric), 2) as change_in_inventories,
+           round(cast(coalesce(change_in_accounts_payable, '0') as numeric), 2) as change_in_accounts_payable,
+           round(cast(coalesce(change_in_other, '0') as numeric), 2) as change_in_other,
+           round(cast(coalesce(net_cash_from_operating_activities, '0') as numeric), 2) as net_cash_from_operating_activities,
+           round(cast(coalesce(change_in_fixed_assets_intangibles, '0') as numeric), 2) as change_in_fixed_assets_intangibles,
+           round(cast(coalesce(net_change_in_long_term_investment, '0') as numeric), 2) as net_change_in_long_term_investment,
+           round(cast(coalesce(net_cash_from_acquisitions_divestitures, '0') as numeric), 2) as net_cash_from_acquisitions_divestitures,
+           round(cast(coalesce(net_cash_from_investing_activities, '0') as numeric), 2) as net_cash_from_investing_activities,
+           round(cast(coalesce(dividends_paid, '0') as numeric), 2) as dividends_paid,
+           round(cast(coalesce(cash_from_repayment_of_debt, '0') as numeric), 2) as cash_from_repayment_of_debt,
+           round(cast(coalesce(cash_from_repurchase_of_equity, '0') as numeric), 2) as cash_from_repurchase_of_equity,
+           round(cast(coalesce(net_cash_from_financing_activities, '0') as numeric), 2) as net_cash_from_financing_activities,
+           round(cast(coalesce(net_change_in_cash, '0') as numeric), 2) as net_change_in_cash
+    from staging.cash_flow_cn_general_annual
+    where ticker in (select ticker from company);
+
+    insert into cash_flow_general (company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date,
+                                   restated_date, shares_basic, shares_diluted, net_income, depreciation_amortization, non_cash_item,
+                                   change_in_working_capital, change_in_accounts_receivable, change_in_inventories, change_in_accounts_payable,
+                                   change_in_other, met_cash_from_operating_activities, change_in_fixed_assets_intangibles,
+                                   net_change_in_long_term_investment, net_cash_from_acquisitions_divestitures, net_cash_from_investing_activities,
+                                   dividends_paid, cash_from_repayment_of_debt, cash_from_repurchase_of_equity, net_cash_from_financing_activities,
+                                   net_change_in_cash)
+    select staging.fn_company_id(ticker::varchar) AS company_id,
+           staging.fn_currency_id(currency) AS currency_id,
+           staging.fn_accounting_period_id('Quarterly') AS accounting_period_id,
+           fiscal_year::integer,
+           fiscal_period,
+           to_date(report_date, 'YYYY-MM-DD') as report_date,
+           to_date(publish_date, 'YYYY-MM-DD') as publish_date,
+           to_date(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic::bigint,
+           shares_diluted::bigint,
+           round(cast(coalesce(net_income_starting_line, '0') as numeric), 2) as net_income_starting_line,
+           round(cast(coalesce(depreciation_amortization, '0') as numeric), 2) as depreciation_amortization,
+           round(cast(coalesce(non_cash_items, '0') as numeric), 2) as non_cash_items,
+           round(cast(coalesce(change_in_working_capital, '0') as numeric), 2) as change_in_working_capital,
+           round(cast(coalesce(change_in_accounts_receivable, '0') as numeric), 2) as change_in_accounts_receivable,
+           round(cast(coalesce(change_in_inventories, '0') as numeric), 2) as change_in_inventories,
+           round(cast(coalesce(change_in_accounts_payable, '0') as numeric), 2) as change_in_accounts_payable,
+           round(cast(coalesce(change_in_other, '0') as numeric), 2) as change_in_other,
+           round(cast(coalesce(net_cash_from_operating_activities, '0') as numeric), 2) as net_cash_from_operating_activities,
+           round(cast(coalesce(change_in_fixed_assets_intangibles, '0') as numeric), 2) as change_in_fixed_assets_intangibles,
+           round(cast(coalesce(net_change_in_long_term_investment, '0') as numeric), 2) as net_change_in_long_term_investment,
+           round(cast(coalesce(net_cash_from_acquisitions_divestitures, '0') as numeric), 2) as net_cash_from_acquisitions_divestitures,
+           round(cast(coalesce(net_cash_from_investing_activities, '0') as numeric), 2) as net_cash_from_investing_activities,
+           round(cast(coalesce(dividends_paid, '0') as numeric), 2) as dividends_paid,
+           round(cast(coalesce(cash_from_repayment_of_debt, '0') as numeric), 2) as cash_from_repayment_of_debt,
+           round(cast(coalesce(cash_from_repurchase_of_equity, '0') as numeric), 2) as cash_from_repurchase_of_equity,
+           round(cast(coalesce(net_cash_from_financing_activities, '0') as numeric), 2) as net_cash_from_financing_activities,
+           round(cast(coalesce(net_change_in_cash, '0') as numeric), 2) as net_change_in_cash
+    from staging.cash_flow_cn_general_quarterly
+    where ticker IN (select ticker from company);
+
+    insert into cash_flow_general (company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date,
+                                   restated_date, shares_basic, shares_diluted, net_income, depreciation_amortization, non_cash_item,
+                                   change_in_working_capital, change_in_accounts_receivable, change_in_inventories, change_in_accounts_payable,
+                                   change_in_other, met_cash_from_operating_activities, change_in_fixed_assets_intangibles,
+                                   net_change_in_long_term_investment, net_cash_from_acquisitions_divestitures, net_cash_from_investing_activities,
+                                   dividends_paid, cash_from_repayment_of_debt, cash_from_repurchase_of_equity, net_cash_from_financing_activities,
+                                   net_change_in_cash)
+    select staging.fn_company_id(ticker::varchar) AS company_id,
+           staging.fn_currency_id(currency) AS currency_id,
+           staging.fn_accounting_period_id('TTM') AS accounting_period_id,
+           fiscal_year::integer,
+           fiscal_period,
+           to_date(report_date, 'YYYY-MM-DD') as report_date,
+           to_date(publish_date, 'YYYY-MM-DD') as publish_date,
+           to_date(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic::bigint,
+           shares_diluted::bigint,
+           round(cast(coalesce(net_income_starting_line, '0') as numeric), 2) as net_income_starting_line,
+           round(cast(coalesce(depreciation_amortization, '0') as numeric), 2) as depreciation_amortization,
+           round(cast(coalesce(non_cash_items, '0') as numeric), 2) as non_cash_items,
+           round(cast(coalesce(change_in_working_capital, '0') as numeric), 2) as change_in_working_capital,
+           round(cast(coalesce(change_in_accounts_receivable, '0') as numeric), 2) as change_in_accounts_receivable,
+           round(cast(coalesce(change_in_inventories, '0') as numeric), 2) as change_in_inventories,
+           round(cast(coalesce(change_in_accounts_payable, '0') as numeric), 2) as change_in_accounts_payable,
+           round(cast(coalesce(change_in_other, '0') as numeric), 2) as change_in_other,
+           round(cast(coalesce(net_cash_from_operating_activities, '0') as numeric), 2) as net_cash_from_operating_activities,
+           round(cast(coalesce(change_in_fixed_assets_intangibles, '0') as numeric), 2) as change_in_fixed_assets_intangibles,
+           round(cast(coalesce(net_change_in_long_term_investment, '0') as numeric), 2) as net_change_in_long_term_investment,
+           round(cast(coalesce(net_cash_from_acquisitions_divestitures, '0') as numeric), 2) as net_cash_from_acquisitions_divestitures,
+           round(cast(coalesce(net_cash_from_investing_activities, '0') as numeric), 2) as net_cash_from_investing_activities,
+           round(cast(coalesce(dividends_paid, '0') as numeric), 2) as dividends_paid,
+           round(cast(coalesce(cash_from_repayment_of_debt, '0') as numeric), 2) as cash_from_repayment_of_debt,
+           round(cast(coalesce(cash_from_repurchase_of_equity, '0') as numeric), 2) as cash_from_repurchase_of_equity,
+           round(cast(coalesce(net_cash_from_financing_activities, '0') as numeric), 2) as net_cash_from_financing_activities,
+           round(cast(coalesce(net_change_in_cash, '0') as numeric), 2) as net_change_in_cash
+    from staging.cash_flow_cn_general_ttm
+    where ticker in (select ticker from public.company);
+
+    -- endregion China
+end
+$procedurebody$ language plpgsql;
+
+create or replace procedure staging.sp_build_cashflow_bank_table()
+as
+$procedurebody$
+begin
+    truncate table public.cash_flow_bank restart identity;
+
+    -- region USA
+
+    insert into public.cash_flow_bank (company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date, restated_date,
+                                shares_basic, shares_diluted, net_income, depreciation_amortization, provision_for_loan_losses, non_cash_items,
+                                change_in_working_capital, net_cash_from_operating_activities, change_in_fixed_assets_intangibles, net_change_in_loans_interbank,
+                                net_cash_from_acquisitions_divestiture, net_cash_from_investing_activities, dividends_paid, cash_from_repayment_of_debt,
+                                cash_from_repurchase_of_equity, net_cash_from_financing_activities, effect_of_foreign_exchange_rates, net_change_in_cash)
+    select staging.fn_company_id(ticker::varchar) as company_id,
+           staging.fn_currency_id(currency) as currency_id,
+           staging.fn_accounting_period_id('Annual') as accounting_period_id,
+           fiscal_year::integer,
+           fiscal_period,
+           to_date(report_date, 'YYYY-MM-DD') as report_date,
+           to_date(publish_date, 'YYYY-MM-DD') as publish_date,
+           to_date(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic::bigint,
+           shares_diluted::bigint,
+           round(cast(coalesce(net_income_starting_line, '0') as numeric), 2) as net_income_starting_line,
+           round(cast(coalesce(depreciation_amortization, '0') as numeric), 2) as depreciation_amortization,
+           round(cast(coalesce(provision_for_loan_losses, '0') as numeric), 2) as provision_for_loan_losses,
+           round(cast(coalesce(non_cash_items, '0') as numeric), 2) as non_cash_items,
+           round(cast(coalesce(change_in_working_capital, '0') as numeric), 2) as change_in_working_capital,
+           round(cast(coalesce(net_cash_from_operating_activities, '0') as numeric), 2) as net_cash_from_operating_activities,
+           round(cast(coalesce(change_in_fixed_assets_intangibles, '0') as numeric), 2) as change_in_fixed_assets_intangibles,
+           round(cast(coalesce(net_change_in_loans_interbank, '0') as numeric), 2) as net_change_in_loans_interbank,
+           round(cast(coalesce(net_cash_from_acquisitions_divestitures, '0') as numeric), 2) as net_cash_from_acquisitions_divestitures,
+           round(cast(coalesce(net_cash_from_investing_activities, '0') as numeric), 2) as net_cash_from_investing_activities,
+           round(cast(coalesce(dividends_paid, '0') as numeric), 2) as dividends_paid,
+           round(cast(coalesce(cash_from_repayment_of_debt, '0') as numeric), 2) as cash_from_repayment_of_debt,
+           round(cast(coalesce(cash_from_repurchase_of_equity, '0') as numeric), 2) as cash_from_repurchase_of_equity,
+           round(cast(coalesce(net_cash_from_financing_activities, '0') as numeric), 2) as net_cash_from_financing_activities,
+           round(cast(coalesce(effect_of_foreign_exchange_rates, '0') as numeric), 2) as effect_of_foreign_exchange_rates,
+           round(cast(coalesce(net_change_in_cash, '0') as numeric), 2) as net_change_in_cash
+    from staging.cash_flow_us_bank_annual
+    where ticker in (select ticker from company);
+
+    insert into public.cash_flow_bank (company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date, restated_date,
+                                       shares_basic, shares_diluted, net_income, depreciation_amortization, provision_for_loan_losses, non_cash_items,
+                                       change_in_working_capital, net_cash_from_operating_activities, change_in_fixed_assets_intangibles, net_change_in_loans_interbank,
+                                       net_cash_from_acquisitions_divestiture, net_cash_from_investing_activities, dividends_paid, cash_from_repayment_of_debt,
+                                       cash_from_repurchase_of_equity, net_cash_from_financing_activities, effect_of_foreign_exchange_rates, net_change_in_cash)
+    select staging.fn_company_id(ticker::varchar) as company_id,
+           staging.fn_currency_id(currency) as currency_id,
+           staging.fn_accounting_period_id('Quarterly') as accounting_period_id,
+           fiscal_year::integer,
+           fiscal_period,
+           to_date(report_date, 'YYYY-MM-DD') as report_date,
+           to_date(publish_date, 'YYYY-MM-DD') as publish_date,
+           to_date(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic::bigint,
+           shares_diluted::bigint,
+           round(cast(coalesce(net_income_starting_line, '0') as numeric), 2) as net_income_starting_line,
+           round(cast(coalesce(depreciation_amortization, '0') as numeric), 2) as depreciation_amortization,
+           round(cast(coalesce(provision_for_loan_losses, '0') as numeric), 2) as provision_for_loan_losses,
+           round(cast(coalesce(non_cash_items, '0') as numeric), 2) as non_cash_items,
+           round(cast(coalesce(change_in_working_capital, '0') as numeric), 2) as change_in_working_capital,
+           round(cast(coalesce(net_cash_from_operating_activities, '0') as numeric), 2) as net_cash_from_operating_activities,
+           round(cast(coalesce(change_in_fixed_assets_intangibles, '0') as numeric), 2) as change_in_fixed_assets_intangibles,
+           round(cast(coalesce(net_change_in_loans_interbank, '0') as numeric), 2) as net_change_in_loans_interbank,
+           round(cast(coalesce(net_cash_from_acquisitions_divestitures, '0') as numeric), 2) as net_cash_from_acquisitions_divestitures,
+           round(cast(coalesce(net_cash_from_investing_activities, '0') as numeric), 2) as net_cash_from_investing_activities,
+           round(cast(coalesce(dividends_paid, '0') as numeric), 2) as dividends_paid,
+           round(cast(coalesce(cash_from_repayment_of_debt, '0') as numeric), 2) as cash_from_repayment_of_debt,
+           round(cast(coalesce(cash_from_repurchase_of_equity, '0') as numeric), 2) as cash_from_repurchase_of_equity,
+           round(cast(coalesce(net_cash_from_financing_activities, '0') as numeric), 2) as net_cash_from_financing_activities,
+           round(cast(coalesce(effect_of_foreign_exchange_rates, '0') as numeric), 2) as effect_of_foreign_exchange_rates,
+           round(cast(coalesce(net_change_in_cash, '0') as numeric), 2) as net_change_in_cash
+    from staging.cash_flow_us_bank_quarterly
+    where ticker in (select ticker from company);
+
+    insert into public.cash_flow_bank (company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date, restated_date,
+                                       shares_basic, shares_diluted, net_income, depreciation_amortization, provision_for_loan_losses, non_cash_items,
+                                       change_in_working_capital, net_cash_from_operating_activities, change_in_fixed_assets_intangibles, net_change_in_loans_interbank,
+                                       net_cash_from_acquisitions_divestiture, net_cash_from_investing_activities, dividends_paid, cash_from_repayment_of_debt,
+                                       cash_from_repurchase_of_equity, net_cash_from_financing_activities, effect_of_foreign_exchange_rates, net_change_in_cash)
+    select staging.fn_company_id(ticker::varchar) as company_id,
+           staging.fn_currency_id(currency) as currency_id,
+           staging.fn_accounting_period_id('TTM') as accounting_period_id,
+           fiscal_year::integer,
+           fiscal_period,
+           to_date(report_date, 'YYYY-MM-DD') as report_date,
+           to_date(publish_date, 'YYYY-MM-DD') as publish_date,
+           to_date(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic::bigint,
+           shares_diluted::bigint,
+           round(cast(coalesce(net_income_starting_line, '0') as numeric), 2) as net_income_starting_line,
+           round(cast(coalesce(depreciation_amortization, '0') as numeric), 2) as depreciation_amortization,
+           round(cast(coalesce(provision_for_loan_losses, '0') as numeric), 2) as provision_for_loan_losses,
+           round(cast(coalesce(non_cash_items, '0') as numeric), 2) as non_cash_items,
+           round(cast(coalesce(change_in_working_capital, '0') as numeric), 2) as change_in_working_capital,
+           round(cast(coalesce(net_cash_from_operating_activities, '0') as numeric), 2) as net_cash_from_operating_activities,
+           round(cast(coalesce(change_in_fixed_assets_intangibles, '0') as numeric), 2) as change_in_fixed_assets_intangibles,
+           round(cast(coalesce(net_change_in_loans_interbank, '0') as numeric), 2) as net_change_in_loans_interbank,
+           round(cast(coalesce(net_cash_from_acquisitions_divestitures, '0') as numeric), 2) as net_cash_from_acquisitions_divestitures,
+           round(cast(coalesce(net_cash_from_investing_activities, '0') as numeric), 2) as net_cash_from_investing_activities,
+           round(cast(coalesce(dividends_paid, '0') as numeric), 2) as dividends_paid,
+           round(cast(coalesce(cash_from_repayment_of_debt, '0') as numeric), 2) as cash_from_repayment_of_debt,
+           round(cast(coalesce(cash_from_repurchase_of_equity, '0') as numeric), 2) as cash_from_repurchase_of_equity,
+           round(cast(coalesce(net_cash_from_financing_activities, '0') as numeric), 2) as net_cash_from_financing_activities,
+           round(cast(coalesce(effect_of_foreign_exchange_rates, '0') as numeric), 2) as effect_of_foreign_exchange_rates,
+           round(cast(coalesce(net_change_in_cash, '0') as numeric), 2) as net_change_in_cash
+    from staging.cash_flow_us_bank_ttm
+    where ticker in (select ticker from company);
+
+    -- endregion USA
+
+    -- region Germany
+
+    insert into public.cash_flow_bank (company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date, restated_date,
+                                       shares_basic, shares_diluted, net_income, depreciation_amortization, provision_for_loan_losses, non_cash_items,
+                                       change_in_working_capital, net_cash_from_operating_activities, change_in_fixed_assets_intangibles, net_change_in_loans_interbank,
+                                       net_cash_from_acquisitions_divestiture, net_cash_from_investing_activities, dividends_paid, cash_from_repayment_of_debt,
+                                       cash_from_repurchase_of_equity, net_cash_from_financing_activities, effect_of_foreign_exchange_rates, net_change_in_cash)
+    select staging.fn_company_id(ticker::varchar) as company_id,
+           staging.fn_currency_id(currency) as currency_id,
+           staging.fn_accounting_period_id('Annual') as accounting_period_id,
+           fiscal_year::integer,
+           fiscal_period,
+           to_date(report_date, 'YYYY-MM-DD') as report_date,
+           to_date(publish_date, 'YYYY-MM-DD') as publish_date,
+           to_date(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic::bigint,
+           shares_diluted::bigint,
+           round(cast(coalesce(net_income_starting_line, '0') as numeric), 2) as net_income_starting_line,
+           round(cast(coalesce(depreciation_amortization, '0') as numeric), 2) as depreciation_amortization,
+           round(cast(coalesce(provision_for_loan_losses, '0') as numeric), 2) as provision_for_loan_losses,
+           round(cast(coalesce(non_cash_items, '0') as numeric), 2) as non_cash_items,
+           round(cast(coalesce(change_in_working_capital, '0') as numeric), 2) as change_in_working_capital,
+           round(cast(coalesce(net_cash_from_operating_activities, '0') as numeric), 2) as net_cash_from_operating_activities,
+           round(cast(coalesce(change_in_fixed_assets_intangibles, '0') as numeric), 2) as change_in_fixed_assets_intangibles,
+           round(cast(coalesce(net_change_in_loans_interbank, '0') as numeric), 2) as net_change_in_loans_interbank,
+           round(cast(coalesce(net_cash_from_acquisitions_divestitures, '0') as numeric), 2) as net_cash_from_acquisitions_divestitures,
+           round(cast(coalesce(net_cash_from_investing_activities, '0') as numeric), 2) as net_cash_from_investing_activities,
+           round(cast(coalesce(dividends_paid, '0') as numeric), 2) as dividends_paid,
+           round(cast(coalesce(cash_from_repayment_of_debt, '0') as numeric), 2) as cash_from_repayment_of_debt,
+           round(cast(coalesce(cash_from_repurchase_of_equity, '0') as numeric), 2) as cash_from_repurchase_of_equity,
+           round(cast(coalesce(net_cash_from_financing_activities, '0') as numeric), 2) as net_cash_from_financing_activities,
+           round(cast(coalesce(effect_of_foreign_exchange_rates, '0') as numeric), 2) as effect_of_foreign_exchange_rates,
+           round(cast(coalesce(net_change_in_cash, '0') as numeric), 2) as net_change_in_cash
+    from staging.cash_flow_de_bank_annual
+    where ticker in (select ticker from company);
+
+    insert into public.cash_flow_bank (company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date, restated_date,
+                                       shares_basic, shares_diluted, net_income, depreciation_amortization, provision_for_loan_losses, non_cash_items,
+                                       change_in_working_capital, net_cash_from_operating_activities, change_in_fixed_assets_intangibles, net_change_in_loans_interbank,
+                                       net_cash_from_acquisitions_divestiture, net_cash_from_investing_activities, dividends_paid, cash_from_repayment_of_debt,
+                                       cash_from_repurchase_of_equity, net_cash_from_financing_activities, effect_of_foreign_exchange_rates, net_change_in_cash)
+    select staging.fn_company_id(ticker::varchar) as company_id,
+           staging.fn_currency_id(currency) as currency_id,
+           staging.fn_accounting_period_id('Quarterly') as accounting_period_id,
+           fiscal_year::integer,
+           fiscal_period,
+           to_date(report_date, 'YYYY-MM-DD') as report_date,
+           to_date(publish_date, 'YYYY-MM-DD') as publish_date,
+           to_date(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic::bigint,
+           shares_diluted::bigint,
+           round(cast(coalesce(net_income_starting_line, '0') as numeric), 2) as net_income_starting_line,
+           round(cast(coalesce(depreciation_amortization, '0') as numeric), 2) as depreciation_amortization,
+           round(cast(coalesce(provision_for_loan_losses, '0') as numeric), 2) as provision_for_loan_losses,
+           round(cast(coalesce(non_cash_items, '0') as numeric), 2) as non_cash_items,
+           round(cast(coalesce(change_in_working_capital, '0') as numeric), 2) as change_in_working_capital,
+           round(cast(coalesce(net_cash_from_operating_activities, '0') as numeric), 2) as net_cash_from_operating_activities,
+           round(cast(coalesce(change_in_fixed_assets_intangibles, '0') as numeric), 2) as change_in_fixed_assets_intangibles,
+           round(cast(coalesce(net_change_in_loans_interbank, '0') as numeric), 2) as net_change_in_loans_interbank,
+           round(cast(coalesce(net_cash_from_acquisitions_divestitures, '0') as numeric), 2) as net_cash_from_acquisitions_divestitures,
+           round(cast(coalesce(net_cash_from_investing_activities, '0') as numeric), 2) as net_cash_from_investing_activities,
+           round(cast(coalesce(dividends_paid, '0') as numeric), 2) as dividends_paid,
+           round(cast(coalesce(cash_from_repayment_of_debt, '0') as numeric), 2) as cash_from_repayment_of_debt,
+           round(cast(coalesce(cash_from_repurchase_of_equity, '0') as numeric), 2) as cash_from_repurchase_of_equity,
+           round(cast(coalesce(net_cash_from_financing_activities, '0') as numeric), 2) as net_cash_from_financing_activities,
+           round(cast(coalesce(effect_of_foreign_exchange_rates, '0') as numeric), 2) as effect_of_foreign_exchange_rates,
+           round(cast(coalesce(net_change_in_cash, '0') as numeric), 2) as net_change_in_cash
+    from staging.cash_flow_de_bank_quarterly
+    where ticker in (select ticker from company);
+
+    insert into public.cash_flow_bank (company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date, restated_date,
+                                       shares_basic, shares_diluted, net_income, depreciation_amortization, provision_for_loan_losses, non_cash_items,
+                                       change_in_working_capital, net_cash_from_operating_activities, change_in_fixed_assets_intangibles, net_change_in_loans_interbank,
+                                       net_cash_from_acquisitions_divestiture, net_cash_from_investing_activities, dividends_paid, cash_from_repayment_of_debt,
+                                       cash_from_repurchase_of_equity, net_cash_from_financing_activities, effect_of_foreign_exchange_rates, net_change_in_cash)
+    select staging.fn_company_id(ticker::varchar) as company_id,
+           staging.fn_currency_id(currency) as currency_id,
+           staging.fn_accounting_period_id('TTM') as accounting_period_id,
+           fiscal_year::integer,
+           fiscal_period,
+           to_date(report_date, 'YYYY-MM-DD') as report_date,
+           to_date(publish_date, 'YYYY-MM-DD') as publish_date,
+           to_date(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic::bigint,
+           shares_diluted::bigint,
+           round(cast(coalesce(net_income_starting_line, '0') as numeric), 2) as net_income_starting_line,
+           round(cast(coalesce(depreciation_amortization, '0') as numeric), 2) as depreciation_amortization,
+           round(cast(coalesce(provision_for_loan_losses, '0') as numeric), 2) as provision_for_loan_losses,
+           round(cast(coalesce(non_cash_items, '0') as numeric), 2) as non_cash_items,
+           round(cast(coalesce(change_in_working_capital, '0') as numeric), 2) as change_in_working_capital,
+           round(cast(coalesce(net_cash_from_operating_activities, '0') as numeric), 2) as net_cash_from_operating_activities,
+           round(cast(coalesce(change_in_fixed_assets_intangibles, '0') as numeric), 2) as change_in_fixed_assets_intangibles,
+           round(cast(coalesce(net_change_in_loans_interbank, '0') as numeric), 2) as net_change_in_loans_interbank,
+           round(cast(coalesce(net_cash_from_acquisitions_divestitures, '0') as numeric), 2) as net_cash_from_acquisitions_divestitures,
+           round(cast(coalesce(net_cash_from_investing_activities, '0') as numeric), 2) as net_cash_from_investing_activities,
+           round(cast(coalesce(dividends_paid, '0') as numeric), 2) as dividends_paid,
+           round(cast(coalesce(cash_from_repayment_of_debt, '0') as numeric), 2) as cash_from_repayment_of_debt,
+           round(cast(coalesce(cash_from_repurchase_of_equity, '0') as numeric), 2) as cash_from_repurchase_of_equity,
+           round(cast(coalesce(net_cash_from_financing_activities, '0') as numeric), 2) as net_cash_from_financing_activities,
+           round(cast(coalesce(effect_of_foreign_exchange_rates, '0') as numeric), 2) as effect_of_foreign_exchange_rates,
+           round(cast(coalesce(net_change_in_cash, '0') as numeric), 2) as net_change_in_cash
+    from staging.cash_flow_de_bank_ttm
+    where ticker in (select ticker from company);
+
+    -- endregion Germany
+
+    -- region China
+
+    insert into public.cash_flow_bank (company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date, restated_date,
+                                       shares_basic, shares_diluted, net_income, depreciation_amortization, provision_for_loan_losses, non_cash_items,
+                                       change_in_working_capital, net_cash_from_operating_activities, change_in_fixed_assets_intangibles, net_change_in_loans_interbank,
+                                       net_cash_from_acquisitions_divestiture, net_cash_from_investing_activities, dividends_paid, cash_from_repayment_of_debt,
+                                       cash_from_repurchase_of_equity, net_cash_from_financing_activities, effect_of_foreign_exchange_rates, net_change_in_cash)
+    select staging.fn_company_id(ticker::varchar) as company_id,
+           staging.fn_currency_id(currency) as currency_id,
+           staging.fn_accounting_period_id('Annual') as accounting_period_id,
+           fiscal_year::integer,
+           fiscal_period,
+           to_date(report_date, 'YYYY-MM-DD') as report_date,
+           to_date(publish_date, 'YYYY-MM-DD') as publish_date,
+           to_date(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic::bigint,
+           shares_diluted::bigint,
+           round(cast(coalesce(net_income_starting_line, '0') as numeric), 2) as net_income_starting_line,
+           round(cast(coalesce(depreciation_amortization, '0') as numeric), 2) as depreciation_amortization,
+           round(cast(coalesce(provision_for_loan_losses, '0') as numeric), 2) as provision_for_loan_losses,
+           round(cast(coalesce(non_cash_items, '0') as numeric), 2) as non_cash_items,
+           round(cast(coalesce(change_in_working_capital, '0') as numeric), 2) as change_in_working_capital,
+           round(cast(coalesce(net_cash_from_operating_activities, '0') as numeric), 2) as net_cash_from_operating_activities,
+           round(cast(coalesce(change_in_fixed_assets_intangibles, '0') as numeric), 2) as change_in_fixed_assets_intangibles,
+           round(cast(coalesce(net_change_in_loans_interbank, '0') as numeric), 2) as net_change_in_loans_interbank,
+           round(cast(coalesce(net_cash_from_acquisitions_divestitures, '0') as numeric), 2) as net_cash_from_acquisitions_divestitures,
+           round(cast(coalesce(net_cash_from_investing_activities, '0') as numeric), 2) as net_cash_from_investing_activities,
+           round(cast(coalesce(dividends_paid, '0') as numeric), 2) as dividends_paid,
+           round(cast(coalesce(cash_from_repayment_of_debt, '0') as numeric), 2) as cash_from_repayment_of_debt,
+           round(cast(coalesce(cash_from_repurchase_of_equity, '0') as numeric), 2) as cash_from_repurchase_of_equity,
+           round(cast(coalesce(net_cash_from_financing_activities, '0') as numeric), 2) as net_cash_from_financing_activities,
+           round(cast(coalesce(effect_of_foreign_exchange_rates, '0') as numeric), 2) as effect_of_foreign_exchange_rates,
+           round(cast(coalesce(net_change_in_cash, '0') as numeric), 2) as net_change_in_cash
+    from staging.cash_flow_cn_bank_annual
+    where ticker in (select ticker from company);
+
+    insert into public.cash_flow_bank (company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date, restated_date,
+                                       shares_basic, shares_diluted, net_income, depreciation_amortization, provision_for_loan_losses, non_cash_items,
+                                       change_in_working_capital, net_cash_from_operating_activities, change_in_fixed_assets_intangibles, net_change_in_loans_interbank,
+                                       net_cash_from_acquisitions_divestiture, net_cash_from_investing_activities, dividends_paid, cash_from_repayment_of_debt,
+                                       cash_from_repurchase_of_equity, net_cash_from_financing_activities, effect_of_foreign_exchange_rates, net_change_in_cash)
+    select staging.fn_company_id(ticker::varchar) as company_id,
+           staging.fn_currency_id(currency) as currency_id,
+           staging.fn_accounting_period_id('Quarterly') as accounting_period_id,
+           fiscal_year::integer,
+           fiscal_period,
+           to_date(report_date, 'YYYY-MM-DD') as report_date,
+           to_date(publish_date, 'YYYY-MM-DD') as publish_date,
+           to_date(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic::bigint,
+           shares_diluted::bigint,
+           round(cast(coalesce(net_income_starting_line, '0') as numeric), 2) as net_income_starting_line,
+           round(cast(coalesce(depreciation_amortization, '0') as numeric), 2) as depreciation_amortization,
+           round(cast(coalesce(provision_for_loan_losses, '0') as numeric), 2) as provision_for_loan_losses,
+           round(cast(coalesce(non_cash_items, '0') as numeric), 2) as non_cash_items,
+           round(cast(coalesce(change_in_working_capital, '0') as numeric), 2) as change_in_working_capital,
+           round(cast(coalesce(net_cash_from_operating_activities, '0') as numeric), 2) as net_cash_from_operating_activities,
+           round(cast(coalesce(change_in_fixed_assets_intangibles, '0') as numeric), 2) as change_in_fixed_assets_intangibles,
+           round(cast(coalesce(net_change_in_loans_interbank, '0') as numeric), 2) as net_change_in_loans_interbank,
+           round(cast(coalesce(net_cash_from_acquisitions_divestitures, '0') as numeric), 2) as net_cash_from_acquisitions_divestitures,
+           round(cast(coalesce(net_cash_from_investing_activities, '0') as numeric), 2) as net_cash_from_investing_activities,
+           round(cast(coalesce(dividends_paid, '0') as numeric), 2) as dividends_paid,
+           round(cast(coalesce(cash_from_repayment_of_debt, '0') as numeric), 2) as cash_from_repayment_of_debt,
+           round(cast(coalesce(cash_from_repurchase_of_equity, '0') as numeric), 2) as cash_from_repurchase_of_equity,
+           round(cast(coalesce(net_cash_from_financing_activities, '0') as numeric), 2) as net_cash_from_financing_activities,
+           round(cast(coalesce(effect_of_foreign_exchange_rates, '0') as numeric), 2) as effect_of_foreign_exchange_rates,
+           round(cast(coalesce(net_change_in_cash, '0') as numeric), 2) as net_change_in_cash
+    from staging.cash_flow_cn_bank_quarterly
+    where ticker in (select ticker from company);
+
+    insert into public.cash_flow_bank (company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date, restated_date,
+                                       shares_basic, shares_diluted, net_income, depreciation_amortization, provision_for_loan_losses, non_cash_items,
+                                       change_in_working_capital, net_cash_from_operating_activities, change_in_fixed_assets_intangibles, net_change_in_loans_interbank,
+                                       net_cash_from_acquisitions_divestiture, net_cash_from_investing_activities, dividends_paid, cash_from_repayment_of_debt,
+                                       cash_from_repurchase_of_equity, net_cash_from_financing_activities, effect_of_foreign_exchange_rates, net_change_in_cash)
+    select staging.fn_company_id(ticker::varchar) as company_id,
+           staging.fn_currency_id(currency) as currency_id,
+           staging.fn_accounting_period_id('TTM') as accounting_period_id,
+           fiscal_year::integer,
+           fiscal_period,
+           to_date(report_date, 'YYYY-MM-DD') as report_date,
+           to_date(publish_date, 'YYYY-MM-DD') as publish_date,
+           to_date(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic::bigint,
+           shares_diluted::bigint,
+           round(cast(coalesce(net_income_starting_line, '0') as numeric), 2) as net_income_starting_line,
+           round(cast(coalesce(depreciation_amortization, '0') as numeric), 2) as depreciation_amortization,
+           round(cast(coalesce(provision_for_loan_losses, '0') as numeric), 2) as provision_for_loan_losses,
+           round(cast(coalesce(non_cash_items, '0') as numeric), 2) as non_cash_items,
+           round(cast(coalesce(change_in_working_capital, '0') as numeric), 2) as change_in_working_capital,
+           round(cast(coalesce(net_cash_from_operating_activities, '0') as numeric), 2) as net_cash_from_operating_activities,
+           round(cast(coalesce(change_in_fixed_assets_intangibles, '0') as numeric), 2) as change_in_fixed_assets_intangibles,
+           round(cast(coalesce(net_change_in_loans_interbank, '0') as numeric), 2) as net_change_in_loans_interbank,
+           round(cast(coalesce(net_cash_from_acquisitions_divestitures, '0') as numeric), 2) as net_cash_from_acquisitions_divestitures,
+           round(cast(coalesce(net_cash_from_investing_activities, '0') as numeric), 2) as net_cash_from_investing_activities,
+           round(cast(coalesce(dividends_paid, '0') as numeric), 2) as dividends_paid,
+           round(cast(coalesce(cash_from_repayment_of_debt, '0') as numeric), 2) as cash_from_repayment_of_debt,
+           round(cast(coalesce(cash_from_repurchase_of_equity, '0') as numeric), 2) as cash_from_repurchase_of_equity,
+           round(cast(coalesce(net_cash_from_financing_activities, '0') as numeric), 2) as net_cash_from_financing_activities,
+           round(cast(coalesce(effect_of_foreign_exchange_rates, '0') as numeric), 2) as effect_of_foreign_exchange_rates,
+           round(cast(coalesce(net_change_in_cash, '0') as numeric), 2) as net_change_in_cash
+    from staging.cash_flow_de_bank_ttm
+    where ticker in (select ticker from company);
+
+    -- endregion
+end
+$procedurebody$ language plpgsql;
+
+
+create or replace procedure staging.sp_build_cashflow_insurance_table()
+as
+$procedurebody$
+begin
+    truncate table public.cash_flow_insurance restart identity;
+
+    -- region USA
+    
+    insert into public.cash_flow_insurance (company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date, restated_date,
+                                     shares_basic, shares_diluted, net_income, depreciation_amortization, non_cash_items, net_cash_from_operating_activities,
+                                     change_in_fixed_assets_intangibles, net_change_in_investments, net_cash_from_investing_activities, dividends_paid,
+                                     cash_from_repayment_of_debt, cash_from_repurchase_of_equity, net_cash_from_financing_activities, effect_of_foreign_exchange_rates,
+                                     net_change_in_cash)
+    select staging.fn_company_id(ticker::varchar) as company_id,
+           staging.fn_currency_id(currency) as currency_id,
+           staging.fn_accounting_period_id('Annual') as accounting_period_id,
+           fiscal_year::integer,
+           fiscal_period,
+           to_date(report_date, 'YYYY-MM-DD') as report_date,
+           to_date(publish_date, 'YYYY-MM-DD') as publish_date,
+           to_date(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic::bigint,
+           shares_diluted::bigint,
+           round(cast(coalesce(net_income_starting_line, '0') as numeric), 2) as net_income_starting_line,
+           round(cast(coalesce(depreciation_amortization, '0') as numeric), 2) as depreciation_amortization,
+           round(cast(coalesce(non_cash_items, '0') as numeric), 2) as non_cash_items,
+           round(cast(coalesce(net_cash_from_operating_activities, '0') as numeric), 2) as net_cash_from_operating_activities,
+           round(cast(coalesce(change_in_fixed_assets_intangibles, '0') as numeric), 2) as change_in_fixed_assets_intangibles,
+           round(cast(coalesce(net_change_in_investments, '0') as numeric), 2) as net_change_in_investments,
+           round(cast(coalesce(net_cash_from_investing_activities, '0') as numeric), 2) as net_cash_from_investing_activities,
+           round(cast(coalesce(dividends_paid, '0') as numeric), 2) as dividends_paid,
+           round(cast(coalesce(cash_from_repayment_of_debt, '0') as numeric), 2) as cash_from_repayment_of_debt,
+           round(cast(coalesce(cash_from_repurchase_of_equity, '0') as numeric), 2) as cash_from_repurchase_of_equity,
+           round(cast(coalesce(net_cash_from_financing_activities, '0') as numeric), 2) as net_cash_from_financing_activities,
+           round(cast(coalesce(effect_of_foreign_exchange_rate, '0') as numeric), 2) as effect_of_foreign_exchange_rate,
+           round(cast(coalesce(net_change_in_cash, '0') as numeric), 2) as net_change_in_cash
+    from staging.cash_flow_us_insurance_annual
+    where ticker in (select ticker from company);
+
+    insert into public.cash_flow_insurance (company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date, restated_date,
+                                            shares_basic, shares_diluted, net_income, depreciation_amortization, non_cash_items, net_cash_from_operating_activities,
+                                            change_in_fixed_assets_intangibles, net_change_in_investments, net_cash_from_investing_activities, dividends_paid,
+                                            cash_from_repayment_of_debt, cash_from_repurchase_of_equity, net_cash_from_financing_activities, effect_of_foreign_exchange_rates,
+                                            net_change_in_cash)
+    select staging.fn_company_id(ticker::varchar) as company_id,
+           staging.fn_currency_id(currency) as currency_id,
+           staging.fn_accounting_period_id('Quarterly') as accounting_period_id,
+           fiscal_year::integer,
+           fiscal_period,
+           to_date(report_date, 'YYYY-MM-DD') as report_date,
+           to_date(publish_date, 'YYYY-MM-DD') as publish_date,
+           to_date(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic::bigint,
+           shares_diluted::bigint,
+           round(cast(coalesce(net_income_starting_line, '0') as numeric), 2) as net_income_starting_line,
+           round(cast(coalesce(depreciation_amortization, '0') as numeric), 2) as depreciation_amortization,
+           round(cast(coalesce(non_cash_items, '0') as numeric), 2) as non_cash_items,
+           round(cast(coalesce(net_cash_from_operating_activities, '0') as numeric), 2) as net_cash_from_operating_activities,
+           round(cast(coalesce(change_in_fixed_assets_intangibles, '0') as numeric), 2) as change_in_fixed_assets_intangibles,
+           round(cast(coalesce(net_change_in_investments, '0') as numeric), 2) as net_change_in_investments,
+           round(cast(coalesce(net_cash_from_investing_activities, '0') as numeric), 2) as net_cash_from_investing_activities,
+           round(cast(coalesce(dividends_paid, '0') as numeric), 2) as dividends_paid,
+           round(cast(coalesce(cash_from_repayment_of_debt, '0') as numeric), 2) as cash_from_repayment_of_debt,
+           round(cast(coalesce(cash_from_repurchase_of_equity, '0') as numeric), 2) as cash_from_repurchase_of_equity,
+           round(cast(coalesce(net_cash_from_financing_activities, '0') as numeric), 2) as net_cash_from_financing_activities,
+           round(cast(coalesce(effect_of_foreign_exchange_rate, '0') as numeric), 2) as effect_of_foreign_exchange_rate,
+           round(cast(coalesce(net_change_in_cash, '0') as numeric), 2) as net_change_in_cash
+    from staging.cash_flow_us_insurance_quarterly
+    where ticker in (select ticker from company);
+
+    insert into public.cash_flow_insurance (company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date, restated_date,
+                                            shares_basic, shares_diluted, net_income, depreciation_amortization, non_cash_items, net_cash_from_operating_activities,
+                                            change_in_fixed_assets_intangibles, net_change_in_investments, net_cash_from_investing_activities, dividends_paid,
+                                            cash_from_repayment_of_debt, cash_from_repurchase_of_equity, net_cash_from_financing_activities, effect_of_foreign_exchange_rates,
+                                            net_change_in_cash)
+    select staging.fn_company_id(ticker::varchar) as company_id,
+           staging.fn_currency_id(currency) as currency_id,
+           staging.fn_accounting_period_id('TTM') as accounting_period_id,
+           fiscal_year::integer,
+           fiscal_period,
+           to_date(report_date, 'YYYY-MM-DD') as report_date,
+           to_date(publish_date, 'YYYY-MM-DD') as publish_date,
+           to_date(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic::bigint,
+           shares_diluted::bigint,
+           round(cast(coalesce(net_income_starting_line, '0') as numeric), 2) as net_income_starting_line,
+           round(cast(coalesce(depreciation_amortization, '0') as numeric), 2) as depreciation_amortization,
+           round(cast(coalesce(non_cash_items, '0') as numeric), 2) as non_cash_items,
+           round(cast(coalesce(net_cash_from_operating_activities, '0') as numeric), 2) as net_cash_from_operating_activities,
+           round(cast(coalesce(change_in_fixed_assets_intangibles, '0') as numeric), 2) as change_in_fixed_assets_intangibles,
+           round(cast(coalesce(net_change_in_investments, '0') as numeric), 2) as net_change_in_investments,
+           round(cast(coalesce(net_cash_from_investing_activities, '0') as numeric), 2) as net_cash_from_investing_activities,
+           round(cast(coalesce(dividends_paid, '0') as numeric), 2) as dividends_paid,
+           round(cast(coalesce(cash_from_repayment_of_debt, '0') as numeric), 2) as cash_from_repayment_of_debt,
+           round(cast(coalesce(cash_from_repurchase_of_equity, '0') as numeric), 2) as cash_from_repurchase_of_equity,
+           round(cast(coalesce(net_cash_from_financing_activities, '0') as numeric), 2) as net_cash_from_financing_activities,
+           round(cast(coalesce(effect_of_foreign_exchange_rate, '0') as numeric), 2) as effect_of_foreign_exchange_rate,
+           round(cast(coalesce(net_change_in_cash, '0') as numeric), 2) as net_change_in_cash
+    from staging.cash_flow_us_insurance_ttm
+    where ticker in (select ticker from company);
+
+    -- endregion USA
+
+    -- region Germany
+
+    insert into public.cash_flow_insurance (company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date, restated_date,
+                                            shares_basic, shares_diluted, net_income, depreciation_amortization, non_cash_items, net_cash_from_operating_activities,
+                                            change_in_fixed_assets_intangibles, net_change_in_investments, net_cash_from_investing_activities, dividends_paid,
+                                            cash_from_repayment_of_debt, cash_from_repurchase_of_equity, net_cash_from_financing_activities, effect_of_foreign_exchange_rates,
+                                            net_change_in_cash)
+    select staging.fn_company_id(ticker::varchar) as company_id,
+           staging.fn_currency_id(currency) as currency_id,
+           staging.fn_accounting_period_id('Annual') as accounting_period_id,
+           fiscal_year::integer,
+           fiscal_period,
+           to_date(report_date, 'YYYY-MM-DD') as report_date,
+           to_date(publish_date, 'YYYY-MM-DD') as publish_date,
+           to_date(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic::bigint,
+           shares_diluted::bigint,
+           round(cast(coalesce(net_income_starting_line, '0') as numeric), 2) as net_income_starting_line,
+           round(cast(coalesce(depreciation_amortization, '0') as numeric), 2) as depreciation_amortization,
+           round(cast(coalesce(non_cash_items, '0') as numeric), 2) as non_cash_items,
+           round(cast(coalesce(net_cash_from_operating_activities, '0') as numeric), 2) as net_cash_from_operating_activities,
+           round(cast(coalesce(change_in_fixed_assets_intangibles, '0') as numeric), 2) as change_in_fixed_assets_intangibles,
+           round(cast(coalesce(net_change_in_investments, '0') as numeric), 2) as net_change_in_investments,
+           round(cast(coalesce(net_cash_from_investing_activities, '0') as numeric), 2) as net_cash_from_investing_activities,
+           round(cast(coalesce(dividends_paid, '0') as numeric), 2) as dividends_paid,
+           round(cast(coalesce(cash_from_repayment_of_debt, '0') as numeric), 2) as cash_from_repayment_of_debt,
+           round(cast(coalesce(cash_from_repurchase_of_equity, '0') as numeric), 2) as cash_from_repurchase_of_equity,
+           round(cast(coalesce(net_cash_from_financing_activities, '0') as numeric), 2) as net_cash_from_financing_activities,
+           round(cast(coalesce(effect_of_foreign_exchange_rate, '0') as numeric), 2) as effect_of_foreign_exchange_rate,
+           round(cast(coalesce(net_change_in_cash, '0') as numeric), 2) as net_change_in_cash
+    from staging.cash_flow_de_insurance_annual
+    where ticker in (select ticker from company);
+
+    insert into public.cash_flow_insurance (company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date, restated_date,
+                                            shares_basic, shares_diluted, net_income, depreciation_amortization, non_cash_items, net_cash_from_operating_activities,
+                                            change_in_fixed_assets_intangibles, net_change_in_investments, net_cash_from_investing_activities, dividends_paid,
+                                            cash_from_repayment_of_debt, cash_from_repurchase_of_equity, net_cash_from_financing_activities, effect_of_foreign_exchange_rates,
+                                            net_change_in_cash)
+    select staging.fn_company_id(ticker::varchar) as company_id,
+           staging.fn_currency_id(currency) as currency_id,
+           staging.fn_accounting_period_id('Quarterly') as accounting_period_id,
+           fiscal_year::integer,
+           fiscal_period,
+           to_date(report_date, 'YYYY-MM-DD') as report_date,
+           to_date(publish_date, 'YYYY-MM-DD') as publish_date,
+           to_date(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic::bigint,
+           shares_diluted::bigint,
+           round(cast(coalesce(net_income_starting_line, '0') as numeric), 2) as net_income_starting_line,
+           round(cast(coalesce(depreciation_amortization, '0') as numeric), 2) as depreciation_amortization,
+           round(cast(coalesce(non_cash_items, '0') as numeric), 2) as non_cash_items,
+           round(cast(coalesce(net_cash_from_operating_activities, '0') as numeric), 2) as net_cash_from_operating_activities,
+           round(cast(coalesce(change_in_fixed_assets_intangibles, '0') as numeric), 2) as change_in_fixed_assets_intangibles,
+           round(cast(coalesce(net_change_in_investments, '0') as numeric), 2) as net_change_in_investments,
+           round(cast(coalesce(net_cash_from_investing_activities, '0') as numeric), 2) as net_cash_from_investing_activities,
+           round(cast(coalesce(dividends_paid, '0') as numeric), 2) as dividends_paid,
+           round(cast(coalesce(cash_from_repayment_of_debt, '0') as numeric), 2) as cash_from_repayment_of_debt,
+           round(cast(coalesce(cash_from_repurchase_of_equity, '0') as numeric), 2) as cash_from_repurchase_of_equity,
+           round(cast(coalesce(net_cash_from_financing_activities, '0') as numeric), 2) as net_cash_from_financing_activities,
+           round(cast(coalesce(effect_of_foreign_exchange_rate, '0') as numeric), 2) as effect_of_foreign_exchange_rate,
+           round(cast(coalesce(net_change_in_cash, '0') as numeric), 2) as net_change_in_cash
+    from staging.cash_flow_de_insurance_quarterly
+    where ticker in (select ticker from company);
+
+    insert into public.cash_flow_insurance (company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date, restated_date,
+                                            shares_basic, shares_diluted, net_income, depreciation_amortization, non_cash_items, net_cash_from_operating_activities,
+                                            change_in_fixed_assets_intangibles, net_change_in_investments, net_cash_from_investing_activities, dividends_paid,
+                                            cash_from_repayment_of_debt, cash_from_repurchase_of_equity, net_cash_from_financing_activities, effect_of_foreign_exchange_rates,
+                                            net_change_in_cash)
+    select staging.fn_company_id(ticker::varchar) as company_id,
+           staging.fn_currency_id(currency) as currency_id,
+           staging.fn_accounting_period_id('TTM') as accounting_period_id,
+           fiscal_year::integer,
+           fiscal_period,
+           to_date(report_date, 'YYYY-MM-DD') as report_date,
+           to_date(publish_date, 'YYYY-MM-DD') as publish_date,
+           to_date(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic::bigint,
+           shares_diluted::bigint,
+           round(cast(coalesce(net_income_starting_line, '0') as numeric), 2) as net_income_starting_line,
+           round(cast(coalesce(depreciation_amortization, '0') as numeric), 2) as depreciation_amortization,
+           round(cast(coalesce(non_cash_items, '0') as numeric), 2) as non_cash_items,
+           round(cast(coalesce(net_cash_from_operating_activities, '0') as numeric), 2) as net_cash_from_operating_activities,
+           round(cast(coalesce(change_in_fixed_assets_intangibles, '0') as numeric), 2) as change_in_fixed_assets_intangibles,
+           round(cast(coalesce(net_change_in_investments, '0') as numeric), 2) as net_change_in_investments,
+           round(cast(coalesce(net_cash_from_investing_activities, '0') as numeric), 2) as net_cash_from_investing_activities,
+           round(cast(coalesce(dividends_paid, '0') as numeric), 2) as dividends_paid,
+           round(cast(coalesce(cash_from_repayment_of_debt, '0') as numeric), 2) as cash_from_repayment_of_debt,
+           round(cast(coalesce(cash_from_repurchase_of_equity, '0') as numeric), 2) as cash_from_repurchase_of_equity,
+           round(cast(coalesce(net_cash_from_financing_activities, '0') as numeric), 2) as net_cash_from_financing_activities,
+           round(cast(coalesce(effect_of_foreign_exchange_rate, '0') as numeric), 2) as effect_of_foreign_exchange_rate,
+           round(cast(coalesce(net_change_in_cash, '0') as numeric), 2) as net_change_in_cash
+    from staging.cash_flow_de_insurance_ttm
+    where ticker in (select ticker from company);
+
+    -- endregion Germany
+
+    -- region China
+
+    insert into public.cash_flow_insurance (company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date, restated_date,
+                                            shares_basic, shares_diluted, net_income, depreciation_amortization, non_cash_items, net_cash_from_operating_activities,
+                                            change_in_fixed_assets_intangibles, net_change_in_investments, net_cash_from_investing_activities, dividends_paid,
+                                            cash_from_repayment_of_debt, cash_from_repurchase_of_equity, net_cash_from_financing_activities, effect_of_foreign_exchange_rates,
+                                            net_change_in_cash)
+    select staging.fn_company_id(ticker::varchar) as company_id,
+           staging.fn_currency_id(currency) as currency_id,
+           staging.fn_accounting_period_id('Annual') as accounting_period_id,
+           fiscal_year::integer,
+           fiscal_period,
+           to_date(report_date, 'YYYY-MM-DD') as report_date,
+           to_date(publish_date, 'YYYY-MM-DD') as publish_date,
+           to_date(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic::bigint,
+           shares_diluted::bigint,
+           round(cast(coalesce(net_income_starting_line, '0') as numeric), 2) as net_income_starting_line,
+           round(cast(coalesce(depreciation_amortization, '0') as numeric), 2) as depreciation_amortization,
+           round(cast(coalesce(non_cash_items, '0') as numeric), 2) as non_cash_items,
+           round(cast(coalesce(net_cash_from_operating_activities, '0') as numeric), 2) as net_cash_from_operating_activities,
+           round(cast(coalesce(change_in_fixed_assets_intangibles, '0') as numeric), 2) as change_in_fixed_assets_intangibles,
+           round(cast(coalesce(net_change_in_investments, '0') as numeric), 2) as net_change_in_investments,
+           round(cast(coalesce(net_cash_from_investing_activities, '0') as numeric), 2) as net_cash_from_investing_activities,
+           round(cast(coalesce(dividends_paid, '0') as numeric), 2) as dividends_paid,
+           round(cast(coalesce(cash_from_repayment_of_debt, '0') as numeric), 2) as cash_from_repayment_of_debt,
+           round(cast(coalesce(cash_from_repurchase_of_equity, '0') as numeric), 2) as cash_from_repurchase_of_equity,
+           round(cast(coalesce(net_cash_from_financing_activities, '0') as numeric), 2) as net_cash_from_financing_activities,
+           round(cast(coalesce(effect_of_foreign_exchange_rate, '0') as numeric), 2) as effect_of_foreign_exchange_rate,
+           round(cast(coalesce(net_change_in_cash, '0') as numeric), 2) as net_change_in_cash
+    from staging.cash_flow_cn_insurance_annual
+    where ticker in (select ticker from company);
+
+    insert into public.cash_flow_insurance (company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date, restated_date,
+                                            shares_basic, shares_diluted, net_income, depreciation_amortization, non_cash_items, net_cash_from_operating_activities,
+                                            change_in_fixed_assets_intangibles, net_change_in_investments, net_cash_from_investing_activities, dividends_paid,
+                                            cash_from_repayment_of_debt, cash_from_repurchase_of_equity, net_cash_from_financing_activities, effect_of_foreign_exchange_rates,
+                                            net_change_in_cash)
+    select staging.fn_company_id(ticker::varchar) as company_id,
+           staging.fn_currency_id(currency) as currency_id,
+           staging.fn_accounting_period_id('Quarterly') as accounting_period_id,
+           fiscal_year::integer,
+           fiscal_period,
+           to_date(report_date, 'YYYY-MM-DD') as report_date,
+           to_date(publish_date, 'YYYY-MM-DD') as publish_date,
+           to_date(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic::bigint,
+           shares_diluted::bigint,
+           round(cast(coalesce(net_income_starting_line, '0') as numeric), 2) as net_income_starting_line,
+           round(cast(coalesce(depreciation_amortization, '0') as numeric), 2) as depreciation_amortization,
+           round(cast(coalesce(non_cash_items, '0') as numeric), 2) as non_cash_items,
+           round(cast(coalesce(net_cash_from_operating_activities, '0') as numeric), 2) as net_cash_from_operating_activities,
+           round(cast(coalesce(change_in_fixed_assets_intangibles, '0') as numeric), 2) as change_in_fixed_assets_intangibles,
+           round(cast(coalesce(net_change_in_investments, '0') as numeric), 2) as net_change_in_investments,
+           round(cast(coalesce(net_cash_from_investing_activities, '0') as numeric), 2) as net_cash_from_investing_activities,
+           round(cast(coalesce(dividends_paid, '0') as numeric), 2) as dividends_paid,
+           round(cast(coalesce(cash_from_repayment_of_debt, '0') as numeric), 2) as cash_from_repayment_of_debt,
+           round(cast(coalesce(cash_from_repurchase_of_equity, '0') as numeric), 2) as cash_from_repurchase_of_equity,
+           round(cast(coalesce(net_cash_from_financing_activities, '0') as numeric), 2) as net_cash_from_financing_activities,
+           round(cast(coalesce(effect_of_foreign_exchange_rate, '0') as numeric), 2) as effect_of_foreign_exchange_rate,
+           round(cast(coalesce(net_change_in_cash, '0') as numeric), 2) as net_change_in_cash
+    from staging.cash_flow_cn_insurance_quarterly
+    where ticker in (select ticker from company);
+
+    insert into public.cash_flow_insurance (company_id, currency_id, accounting_period_id, fiscal_year, fiscal_period, report_date, publish_date, restated_date,
+                                            shares_basic, shares_diluted, net_income, depreciation_amortization, non_cash_items, net_cash_from_operating_activities,
+                                            change_in_fixed_assets_intangibles, net_change_in_investments, net_cash_from_investing_activities, dividends_paid,
+                                            cash_from_repayment_of_debt, cash_from_repurchase_of_equity, net_cash_from_financing_activities, effect_of_foreign_exchange_rates,
+                                            net_change_in_cash)
+    select staging.fn_company_id(ticker::varchar) as company_id,
+           staging.fn_currency_id(currency) as currency_id,
+           staging.fn_accounting_period_id('TTM') as accounting_period_id,
+           fiscal_year::integer,
+           fiscal_period,
+           to_date(report_date, 'YYYY-MM-DD') as report_date,
+           to_date(publish_date, 'YYYY-MM-DD') as publish_date,
+           to_date(restated_date, 'YYYY-MM-DD') as restated_date,
+           shares_basic::bigint,
+           shares_diluted::bigint,
+           round(cast(coalesce(net_income_starting_line, '0') as numeric), 2) as net_income_starting_line,
+           round(cast(coalesce(depreciation_amortization, '0') as numeric), 2) as depreciation_amortization,
+           round(cast(coalesce(non_cash_items, '0') as numeric), 2) as non_cash_items,
+           round(cast(coalesce(net_cash_from_operating_activities, '0') as numeric), 2) as net_cash_from_operating_activities,
+           round(cast(coalesce(change_in_fixed_assets_intangibles, '0') as numeric), 2) as change_in_fixed_assets_intangibles,
+           round(cast(coalesce(net_change_in_investments, '0') as numeric), 2) as net_change_in_investments,
+           round(cast(coalesce(net_cash_from_investing_activities, '0') as numeric), 2) as net_cash_from_investing_activities,
+           round(cast(coalesce(dividends_paid, '0') as numeric), 2) as dividends_paid,
+           round(cast(coalesce(cash_from_repayment_of_debt, '0') as numeric), 2) as cash_from_repayment_of_debt,
+           round(cast(coalesce(cash_from_repurchase_of_equity, '0') as numeric), 2) as cash_from_repurchase_of_equity,
+           round(cast(coalesce(net_cash_from_financing_activities, '0') as numeric), 2) as net_cash_from_financing_activities,
+           round(cast(coalesce(effect_of_foreign_exchange_rate, '0') as numeric), 2) as effect_of_foreign_exchange_rate,
+           round(cast(coalesce(net_change_in_cash, '0') as numeric), 2) as net_change_in_cash
+    from staging.cash_flow_cn_insurance_ttm
+    where ticker in (select ticker from company);
+
+    -- endregion China
 end
 $procedurebody$ language plpgsql;
 
